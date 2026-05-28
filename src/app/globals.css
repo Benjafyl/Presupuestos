@@ -8,19 +8,144 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --font-sans: "Geist", "Geist Fallback", Arial, Helvetica, sans-serif;
+  --font-mono: "Geist Mono", "Geist Mono Fallback", ui-monospace, monospace;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: "Geist", "Geist Fallback", Arial, Helvetica, sans-serif;
+}
+
+button,
+a,
+input,
+select,
+textarea {
+  border-radius: 0;
+}
+
+.button-primary,
+.button-secondary {
+  display: inline-flex;
+  height: 2.25rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  border: 1px solid #991b1b;
+  padding: 0 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+  line-height: 1;
+  transition:
+    background 120ms ease,
+    color 120ms ease,
+    border-color 120ms ease;
+}
+
+.button-primary {
+  background: #991b1b;
+  color: white;
+}
+
+.button-primary:hover {
+  background: #7f1d1d;
+}
+
+.button-primary:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.button-secondary {
+  background: white;
+  color: #171717;
+}
+
+.button-secondary:hover {
+  background: #f5f5f5;
+}
+
+.freelance-mode .button-primary {
+  border-color: #1d4ed8;
+  background: #1d4ed8;
+  color: white;
+}
+
+.freelance-mode .button-primary:hover {
+  background: #1e40af;
+}
+
+.freelance-mode .button-secondary {
+  border-color: #1d4ed8;
+  background: white;
+  color: #0f172a;
+}
+
+.freelance-mode .button-secondary:hover {
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+@media print {
+  body {
+    background: white;
+  }
+}
+
+.quote-preview {
+  font-family: var(--font-nunito-sans), "Nunito Sans", "Inter", Arial, Helvetica, sans-serif;
+  line-height: 1.28;
+}
+
+.quote-preview b {
+  font-weight: 600;
+}
+
+.quote-preview table thead {
+  background: #991b1b;
+}
+
+.quote-preview.freelance-preview table thead {
+  background: #1d4ed8;
+}
+
+.quote-preview.freelance-preview table th {
+  border-bottom-color: #1e40af !important;
+}
+
+.quote-preview table th {
+  border-left-width: 0 !important;
+  border-right-width: 0 !important;
+  border-top-width: 0 !important;
+  border-bottom: 1px solid #7f1d1d !important;
+  font-weight: 600;
+  line-height: 1.18;
+  padding-block: 5px;
+}
+
+.quote-preview table td {
+  border-color: #525252 !important;
+  padding: 5px;
+  line-height: 1.24;
+}
+
+.quote-preview table td:nth-child(4),
+.quote-preview table td:nth-child(5),
+.quote-preview table tr > td[colspan] + td {
+  padding-right: 10px;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+  text-align: right;
+}
+
+.quote-preview table td:last-child {
+  font-weight: 600;
+  font-style: normal;
+}
+
+.quote-preview > div:last-child {
+  font-weight: 500;
+  line-height: 1.32;
 }

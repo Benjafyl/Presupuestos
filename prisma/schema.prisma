@@ -1,0 +1,86 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model CompanySettings {
+  id               Int      @id @default(autoincrement())
+  name             String   @default("INTERCHILE CLIMA SPA")
+  rut              String   @default("76.093.202-7")
+  address          String   @default("Merced 838 A of 117 / Santiago")
+  quotePrefix      String   @default("BYL")
+  responsible      String   @default("BENJAMIN YAÑEZ LASALVIA")
+  signatureDefault String   @default("SALUDA ATENTAMENTE,\n\nBENJAMIN YAÑEZ LASALVIA\nINTERCHILE CLIMA SPA")
+  updatedAt        DateTime @updatedAt
+}
+
+model Client {
+  id          Int      @id @default(autoincrement())
+  name        String
+  rut         String?
+  branch      String?
+  commune     String?
+  attention   String?
+  city        String?
+  payment     String?
+  projectCode String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  quotes      Quote[]
+}
+
+model Quote {
+  id            Int         @id @default(autoincrement())
+  quoteMode     String      @default("interchile")
+  code          String
+  revision      String?
+  currency      String      @default("CLP")
+  taxMode       String      @default("NET")
+  quoteDate     DateTime
+  projectCode   String?
+  clientId      Int?
+  client        Client?     @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  clientName    String
+  clientRut     String?
+  branch        String?
+  commune       String?
+  attention     String?
+  city          String?
+  payment       String?
+  mainText      String
+  exclusions    String
+  warranty      String
+  executionTime String
+  signature     String
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  items         QuoteItem[]
+}
+
+model QuoteItem {
+  id          Int    @id @default(autoincrement())
+  quoteId     Int
+  quote       Quote  @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  position    Int
+  qty         Float
+  description String
+  unitValue   Float
+}
+
+model TemplateText {
+  id            Int      @id @default(autoincrement())
+  mainText      String
+  exclusions    String
+  warranty      String
+  executionTime String
+  updatedAt     DateTime @updatedAt
+}
