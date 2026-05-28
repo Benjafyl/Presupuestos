@@ -1,36 +1,54 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Generador de Presupuestos
 
-## Getting Started
+Aplicacion local en Next.js para generar cotizaciones en PDF para Interchile Clima y Benjamin Yanez. Usa Prisma con SQLite local y Playwright para exportar el presupuesto en formato A4.
 
-First, run the development server:
+## Desarrollo local
 
 ```bash
+npm install
+npm run db:init
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Abrir [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Scripts
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run dev       # servidor local
+npm run db:init   # inicializa SQLite y Prisma Client
+npm run build     # build de produccion
+npm run start     # servidor Next.js de produccion
+npm run lint      # lint
+```
 
-## Learn More
+## Docker
 
-To learn more about Next.js, take a look at the following resources:
+La imagen usa Playwright con Chromium incluido para que la exportacion PDF funcione dentro del contenedor.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+docker build -t presupuestos .
+docker run --rm -p 3000:3000 -v presupuestos_data:/app/prisma presupuestos
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+La base SQLite queda en `/app/prisma/dev.db`. Para no perder clientes, cotizaciones y configuraciones, montar un volumen persistente en `/app/prisma`.
 
-## Deploy on Vercel
+## Deploy en Dockploy
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+1. Crear una app desde el repositorio y rama `main`.
+2. Usar deploy por `Dockerfile`.
+3. Exponer el puerto `3000`.
+4. Agregar un volumen persistente:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```text
+/app/prisma
+```
+
+5. Variables opcionales:
+
+```text
+DATABASE_URL=file:./dev.db
+PORT=3000
+```
+
+El contenedor ejecuta automaticamente `node scripts/init-db.mjs` al iniciar, por lo que crea o actualiza la base SQLite si el volumen esta vacio.
