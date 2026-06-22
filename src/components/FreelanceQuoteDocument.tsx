@@ -43,18 +43,20 @@ export function FreelanceQuoteDocument({ quote }: FreelanceQuoteDocumentProps) {
   const totals = quoteTotals(quote.items);
   const showsIva = quote.taxMode === "IVA_INCLUDED";
   const code = displayCode(quote.code, quote.revision);
+  const densityClass =
+    quote.items.length >= 10 ? "freelance-density-compact" : quote.items.length >= 6 ? "freelance-density-tight" : "";
 
   return (
-    <main className="freelance-sheet">
+    <main className={`freelance-sheet ${densityClass}`}>
       <header className="freelance-header">
         <section className="freelance-brand">
           <Image
             alt="BYL"
             className="freelance-logo"
-            height={96}
+            height={90}
             priority
             src="/logo-byl.png"
-            width={96}
+            width={220}
           />
           <div>
             <h1>{freelanceSettings.name}</h1>
@@ -64,7 +66,7 @@ export function FreelanceQuoteDocument({ quote }: FreelanceQuoteDocumentProps) {
         </section>
         <section className="freelance-meta">
           <h2>Presupuesto</h2>
-          <p><strong>Nº</strong> {code}</p>
+          <p><strong>Nro</strong> {code}</p>
           <p><strong>Fecha</strong> {toDisplayDate(quote.quoteDate)}</p>
         </section>
       </header>

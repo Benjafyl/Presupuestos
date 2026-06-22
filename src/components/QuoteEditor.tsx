@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo, useState, useTransition } from "react";
+import { useMemo, useState } from "react";
 import { Copy, Eye, FileDown, Plus, Save, Trash2 } from "lucide-react";
 import { QuotePayload, saveQuote } from "@/app/actions";
 import {
@@ -90,7 +90,7 @@ export function QuoteEditor({
 }: QuoteEditorProps) {
   const isFreelance = quoteMode === "freelance";
   const router = useRouter();
-  const [isPending, startTransition] = useTransition();
+  const [isSaving, setIsSaving] = useState(false);
   const [savedMessage, setSavedMessage] = useState("");
   const prefix = isFreelance ? freelanceSettings.quotePrefix : settings.quotePrefix;
   const signatureDefault = isFreelance ? freelanceSettings.signatureDefault : settings.signatureDefault;
@@ -211,16 +211,24 @@ export function QuoteEditor({
     });
   }
 
-  function submit() {
-    startTransition(async () => {
+  async function submit() {
+    if (isSaving) return;
+
+    setIsSaving(true);
+    try {
       const result = await saveQuote(form);
+      setForm((current) => ({
+        ...current,
+        id: result.id,
+        clientId: result.clientId ?? current.clientId,
+      }));
       setSavedMessage("Cotizacion guardada.");
       if (!form.id) {
-        router.push(editHref(result.id));
-      } else {
-        router.refresh();
+        router.replace(editHref(result.id));
       }
-    });
+    } finally {
+      setIsSaving(false);
+    }
   }
 
   const codeWithRevision = displayCode(form.code, form.revision);
@@ -244,8 +252,8 @@ export function QuoteEditor({
                 </Link>
               </>
             ) : null}
-            <button className="button-primary" disabled={isPending} type="button" onClick={submit}>
-              <Save size={16} /> {isPending ? "Guardando..." : "Guardar"}
+            <button className="button-primary" disabled={isSaving} type="button" onClick={submit}>
+              <Save size={16} /> {isSaving ? "Guardando..." : "Guardar"}
             </button>
           </div>
         </div>
@@ -440,7 +448,7 @@ export function QuoteEditor({
           <div className="flex items-start justify-between gap-4">
             {isFreelance ? (
               <div>
-                <Image alt="BYL" className="mb-2 h-12 w-12 object-contain" height={96} src="/logo-byl.png" width={96} />
+                <Image alt="BYL" className="mb-2 h-6 w-16 object-cover object-center" height={90} src="/logo-byl.png" width={220} />
                 <p className="font-bold text-blue-900">{freelanceSettings.name}</p>
                 <p className="text-neutral-600">{freelanceSettings.area}</p>
               </div>
@@ -452,7 +460,7 @@ export function QuoteEditor({
             )}
             <div className="text-right">
               <p className="text-base font-bold">{isFreelance ? "PRESUPUESTO" : "COTIZACION"}</p>
-              <p className="font-bold">Nº {codeWithRevision}</p>
+              <p className="font-bold">Nro {codeWithRevision}</p>
               <p className="mt-2 font-bold">{isFreelance ? freelanceSettings.email : "RUT: 76.093.202-7"}</p>
             </div>
           </div>

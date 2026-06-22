@@ -24,7 +24,7 @@ export default async function PrintQuotePage({ params }: PrintQuotePageProps) {
     <>
       <style>{`
         :root {
-          --quote-font: var(--font-nunito-sans), "Nunito Sans", "Inter", Arial, Helvetica, sans-serif;
+          --quote-font: Arial, "Liberation Sans", Helvetica, sans-serif;
           --quote-red: #a33a36;
           --quote-red-dark: #8f302d;
           --quote-line: #444;
@@ -43,6 +43,10 @@ export default async function PrintQuotePage({ params }: PrintQuotePageProps) {
           background: #e5e5e5;
           font-family: var(--quote-font);
           color: var(--quote-text);
+          font-kerning: normal;
+          font-stretch: normal;
+          letter-spacing: normal;
+          word-spacing: normal;
         }
 
         .quote-sheet {
@@ -56,6 +60,11 @@ export default async function PrintQuotePage({ params }: PrintQuotePageProps) {
           font-size: 10.5px;
           font-weight: 400;
           line-height: 1.28;
+          font-synthesis: none;
+          font-kerning: normal;
+          font-variant-ligatures: none;
+          letter-spacing: normal;
+          word-spacing: normal;
         }
 
         .quote-header {
@@ -95,7 +104,7 @@ export default async function PrintQuotePage({ params }: PrintQuotePageProps) {
           margin: 0 0 4.2mm;
           font-size: 20px;
           font-weight: 700;
-          letter-spacing: 0.2px;
+          letter-spacing: normal;
           line-height: 1.15;
         }
 
@@ -111,7 +120,7 @@ export default async function PrintQuotePage({ params }: PrintQuotePageProps) {
         .quote-meta-value {
           font-size: 13px;
           font-weight: 600;
-          letter-spacing: 0.1px;
+          letter-spacing: normal;
         }
 
         .service-box {
@@ -169,6 +178,7 @@ export default async function PrintQuotePage({ params }: PrintQuotePageProps) {
         .service-right div {
           display: grid;
           min-height: 4.6mm;
+          min-width: 0;
         }
 
         .service-left div {
@@ -183,11 +193,16 @@ export default async function PrintQuotePage({ params }: PrintQuotePageProps) {
         .service-label {
           font-weight: 600;
           color: var(--quote-text);
+          white-space: nowrap;
         }
 
         .service-value {
           font-weight: 400;
           color: var(--quote-text);
+          min-width: 0;
+          overflow-wrap: normal;
+          word-break: normal;
+          hyphens: none;
         }
 
         .main-text {
@@ -203,6 +218,7 @@ export default async function PrintQuotePage({ params }: PrintQuotePageProps) {
         .items-table {
           width: 100%;
           border-collapse: collapse;
+          table-layout: fixed;
           font-size: 10.4px;
           page-break-inside: auto;
           font-variant-numeric: tabular-nums;
@@ -218,6 +234,7 @@ export default async function PrintQuotePage({ params }: PrintQuotePageProps) {
         }
 
         .items-table tr {
+          break-inside: avoid;
           page-break-inside: avoid;
           page-break-after: auto;
         }
@@ -232,6 +249,7 @@ export default async function PrintQuotePage({ params }: PrintQuotePageProps) {
           font-weight: 600;
           line-height: 1.18;
           vertical-align: middle;
+          white-space: nowrap;
         }
 
         .items-table th + th {
@@ -243,6 +261,9 @@ export default async function PrintQuotePage({ params }: PrintQuotePageProps) {
           padding: 5px 5px;
           line-height: 1.22;
           vertical-align: top;
+          overflow-wrap: normal;
+          word-break: normal;
+          hyphens: none;
         }
 
         .items-table th:nth-child(1),
@@ -266,6 +287,7 @@ export default async function PrintQuotePage({ params }: PrintQuotePageProps) {
           padding-right: 10px;
           font-variant-numeric: tabular-nums;
           font-feature-settings: "tnum";
+          white-space: nowrap;
         }
 
         .item-total {
@@ -304,6 +326,7 @@ export default async function PrintQuotePage({ params }: PrintQuotePageProps) {
 
         .final-section {
           margin-top: 4.2mm;
+          break-inside: avoid;
           page-break-inside: avoid;
         }
 
@@ -359,47 +382,56 @@ export default async function PrintQuotePage({ params }: PrintQuotePageProps) {
           margin: 0 auto;
           background: #fff;
           box-sizing: border-box;
-          padding: 19mm 15mm 17mm;
-          color: #111827;
-          font-family: var(--quote-font);
-          font-size: 11px;
-          line-height: 1.35;
+          padding: 20mm 14.5mm 16mm;
+          color: #0f172a;
+          font-family: Arial, "Liberation Sans", Helvetica, sans-serif;
+          font-size: 10px;
+          font-weight: 400;
+          font-synthesis: none;
+          font-kerning: normal;
+          font-variant-ligatures: none;
+          line-height: 1.32;
+          letter-spacing: normal;
+          word-spacing: normal;
         }
 
         .freelance-header {
           display: grid;
-          grid-template-columns: 1fr 54mm;
-          gap: 16mm;
+          grid-template-columns: 1fr 55mm;
+          gap: 14mm;
           align-items: start;
-          border-bottom: 2px solid #1d4ed8;
-          padding-bottom: 8mm;
+          border-bottom: 1.6px solid #2563eb;
+          padding-bottom: 8.5mm;
         }
 
         .freelance-brand {
           display: flex;
           align-items: center;
-          gap: 4mm;
+          gap: 4.2mm;
         }
 
         .freelance-logo {
           display: block;
-          width: 18mm;
-          height: 18mm;
-          object-fit: contain;
+          width: 19mm;
+          height: 9mm;
+          object-fit: cover;
+          object-position: center;
         }
 
         .freelance-brand h1 {
           margin: 0;
-          font-size: 22px;
-          font-weight: 800;
+          font-size: 20px;
+          font-weight: 700;
           color: #0f172a;
+          line-height: 1.08;
         }
 
         .freelance-brand p {
-          margin: 1mm 0 0;
+          margin: 1.1mm 0 0;
           color: #475569;
-          font-size: 11px;
-          font-weight: 500;
+          font-size: 9.6px;
+          font-weight: 400;
+          line-height: 1.25;
         }
 
         .freelance-meta {
@@ -407,123 +439,149 @@ export default async function PrintQuotePage({ params }: PrintQuotePageProps) {
         }
 
         .freelance-meta h2 {
-          margin: 0 0 5mm;
+          margin: 0 0 5.2mm;
           color: #0f172a;
-          font-size: 22px;
-          font-weight: 800;
+          font-size: 18.5px;
+          font-weight: 700;
+          line-height: 1.12;
         }
 
         .freelance-meta p {
-          margin: 0 0 2mm;
-          color: #334155;
-          font-size: 11.5px;
+          margin: 0 0 2.1mm;
+          color: #0f172a;
+          font-size: 9.6px;
+          font-weight: 600;
+          line-height: 1.2;
         }
 
         .freelance-meta strong {
-          margin-right: 3mm;
+          margin-right: 3.5mm;
           color: #0f172a;
           font-weight: 700;
         }
 
         .freelance-intro {
-          margin: 7mm 0;
-          border-left: 3px solid #1d4ed8;
+          margin: 6.8mm 0 6.2mm;
+          border-left: 2.2px solid #2563eb;
           background: #eff6ff;
-          padding: 4mm 5mm;
+          padding: 3.2mm 5mm;
           color: #1e3a8a;
-          font-size: 12px;
-          font-weight: 600;
+          font-size: 10px;
+          font-weight: 700;
+          line-height: 1.28;
         }
 
         .freelance-client {
           display: grid;
           grid-template-columns: repeat(3, 1fr);
-          gap: 4mm;
-          margin-bottom: 7mm;
+          gap: 3.6mm 4.3mm;
+          margin-bottom: 6.5mm;
         }
 
         .freelance-client div {
           border-bottom: 1px solid #cbd5e1;
-          padding-bottom: 2mm;
+          padding-bottom: 1.7mm;
         }
 
         .freelance-client span {
           display: block;
-          margin-bottom: 1mm;
+          margin-bottom: 0.8mm;
           color: #64748b;
-          font-size: 9px;
+          font-size: 7.4px;
           font-weight: 700;
           text-transform: uppercase;
         }
 
         .freelance-client strong {
           color: #111827;
-          font-size: 11px;
+          font-size: 9.2px;
           font-weight: 700;
+          line-height: 1.22;
+          overflow-wrap: normal;
+          word-break: normal;
+          hyphens: none;
         }
 
         .freelance-description {
-          margin-bottom: 6mm;
+          margin-bottom: 6.2mm;
         }
 
         .freelance-description h3,
         .freelance-notes h3 {
-          margin: 0 0 2mm;
+          margin: 0 0 2.1mm;
           color: #0f172a;
-          font-size: 12px;
-          font-weight: 800;
+          font-size: 10.2px;
+          font-weight: 700;
+          line-height: 1.2;
         }
 
         .freelance-description p,
         .freelance-notes p {
           margin: 0;
-          color: #334155;
-          font-size: 11px;
+          color: #0f172a;
+          font-size: 8.6px;
+          line-height: 1.28;
         }
 
         .freelance-table {
           width: 100%;
           border-collapse: collapse;
-          margin-bottom: 7mm;
-          font-size: 10.5px;
+          table-layout: fixed;
+          margin-bottom: 5.8mm;
+          font-size: 8.7px;
           font-variant-numeric: tabular-nums;
           font-feature-settings: "tnum";
+          page-break-inside: auto;
         }
 
         .freelance-table thead {
-          background: #1d4ed8;
-          color: #fff;
+          display: table-header-group;
+        }
+
+        .freelance-table tr {
+          break-inside: avoid;
+          page-break-inside: avoid;
+          page-break-after: auto;
         }
 
         .freelance-table th {
           border: 0;
+          background: #2563eb;
+          color: #fff;
           padding: 6px 5px;
-          font-size: 11px;
+          font-size: 8.8px;
           font-weight: 700;
           text-align: left;
+          line-height: 1.15;
+          white-space: nowrap;
         }
 
         .freelance-table th:nth-child(1),
         .freelance-table th:nth-child(2) {
-          width: 11mm;
+          width: 10.5mm;
           text-align: center;
         }
 
         .freelance-table th:nth-child(4),
         .freelance-table th:nth-child(5) {
-          width: 32mm;
+          width: 31mm;
           text-align: right;
         }
 
         .freelance-table td {
           border-bottom: 1px solid #cbd5e1;
-          padding: 6px 5px;
+          padding: 5px 5px;
           vertical-align: top;
+          line-height: 1.2;
+          overflow-wrap: normal;
+          word-break: normal;
+          hyphens: none;
         }
 
         .freelance-table .money-cell {
           padding-right: 10px;
           text-align: right;
+          white-space: nowrap;
         }
 
         .freelance-total-row td {
@@ -531,30 +589,124 @@ export default async function PrintQuotePage({ params }: PrintQuotePageProps) {
           color: #0f172a;
           font-weight: 700;
           text-align: right;
+          padding-top: 5px;
+          padding-bottom: 5px;
         }
 
         .freelance-grand-total td {
           background: #eff6ff;
           color: #1d4ed8;
-          font-size: 12px;
-          font-weight: 800;
+          font-size: 9.4px;
+          font-weight: 700;
         }
 
         .freelance-notes {
           display: grid;
-          gap: 5mm;
+          gap: 3.2mm;
+        }
+
+        .freelance-notes > div {
+          break-inside: avoid;
           page-break-inside: avoid;
         }
 
         .freelance-signature {
-          margin-top: 9mm;
-          border-top: 1px solid #cbd5e1;
-          padding-top: 5mm;
+          margin-top: 5.2mm;
+          padding-top: 0;
           color: #0f172a;
-          font-size: 11.5px;
+          font-size: 9.2px;
           font-weight: 700;
-          line-height: 1.45;
+          line-height: 1.42;
+          break-inside: avoid;
           page-break-inside: avoid;
+        }
+
+        .freelance-density-tight {
+          padding-top: 17mm;
+          padding-bottom: 13mm;
+          font-size: 9.6px;
+        }
+
+        .freelance-density-tight .freelance-header {
+          padding-bottom: 6.5mm;
+        }
+
+        .freelance-density-tight .freelance-intro {
+          margin: 5mm 0;
+          padding-top: 2.7mm;
+          padding-bottom: 2.7mm;
+        }
+
+        .freelance-density-tight .freelance-client {
+          gap: 2.8mm 4mm;
+          margin-bottom: 5mm;
+        }
+
+        .freelance-density-tight .freelance-description {
+          margin-bottom: 5mm;
+        }
+
+        .freelance-density-tight .freelance-table {
+          margin-bottom: 4.5mm;
+          font-size: 8.2px;
+        }
+
+        .freelance-density-tight .freelance-table th,
+        .freelance-density-tight .freelance-table td {
+          padding-top: 4px;
+          padding-bottom: 4px;
+        }
+
+        .freelance-density-tight .freelance-notes {
+          gap: 2.5mm;
+        }
+
+        .freelance-density-tight .freelance-signature {
+          margin-top: 4mm;
+        }
+
+        .freelance-density-compact {
+          padding-top: 15mm;
+          padding-bottom: 11mm;
+          font-size: 9px;
+        }
+
+        .freelance-density-compact .freelance-header {
+          padding-bottom: 5mm;
+        }
+
+        .freelance-density-compact .freelance-intro {
+          margin: 4mm 0;
+          padding-top: 2.2mm;
+          padding-bottom: 2.2mm;
+        }
+
+        .freelance-density-compact .freelance-client {
+          gap: 2.3mm 3.8mm;
+          margin-bottom: 4mm;
+        }
+
+        .freelance-density-compact .freelance-description {
+          margin-bottom: 4mm;
+        }
+
+        .freelance-density-compact .freelance-table {
+          margin-bottom: 3.5mm;
+          font-size: 7.8px;
+        }
+
+        .freelance-density-compact .freelance-table th,
+        .freelance-density-compact .freelance-table td {
+          padding-top: 3px;
+          padding-bottom: 3px;
+        }
+
+        .freelance-density-compact .freelance-notes {
+          gap: 2mm;
+        }
+
+        .freelance-density-compact .freelance-signature {
+          margin-top: 3mm;
         }
       `}</style>
       {quote.quoteMode === "freelance" ? (

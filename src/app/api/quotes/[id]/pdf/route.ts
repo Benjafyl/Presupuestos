@@ -26,6 +26,11 @@ export async function GET(request: NextRequest, context: PdfRouteContext) {
     const page = await browser.newPage();
     const printUrl = new URL(`/quotes/${quote.id}/print`, request.url);
     await page.goto(printUrl.toString(), { waitUntil: "networkidle" });
+    await page.emulateMedia({ media: "print" });
+    await page.evaluate(async () => {
+      await document.fonts.ready;
+    });
+
     const pdf = await page.pdf({
       format: "A4",
       printBackground: true,

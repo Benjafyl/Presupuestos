@@ -173,7 +173,7 @@ export async function saveQuote(payload: QuotePayload) {
   revalidatePath(`/quotes/${quote.id}/edit`);
   revalidatePath(`/quotes/${quote.id}/print`);
   revalidatePath(`/freelance/quotes/${quote.id}/edit`);
-  return { id: quote.id };
+  return { id: quote.id, clientId };
 }
 
 export async function duplicateQuote(id: number) {

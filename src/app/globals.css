@@ -111,6 +111,12 @@ textarea {
   background: #1d4ed8;
 }
 
+.quote-preview.freelance-preview {
+  font-family: Arial, "Liberation Sans", Helvetica, sans-serif;
+  letter-spacing: 0;
+  text-rendering: geometricPrecision;
+}
+
 .quote-preview.freelance-preview table th {
   border-bottom-color: #1e40af !important;
 }
