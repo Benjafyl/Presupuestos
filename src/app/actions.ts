@@ -104,7 +104,7 @@ export async function saveQuote(payload: QuotePayload) {
   const clean = cleanQuotePayload(payload, prefix);
 
   let clientId = payload.clientId ?? null;
-  if (payload.saveClient && clean.clientName) {
+  if (payload.saveClient && payload.clientName.trim()) {
     const clientData = {
       name: clean.clientName,
       rut: clean.clientRut,

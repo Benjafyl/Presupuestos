@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Copy, Eye, FileDown, Plus, Save, Trash2 } from "lucide-react";
 import { QuotePayload, saveQuote } from "@/app/actions";
 import {
@@ -61,6 +61,9 @@ const fieldClass =
 const areaClass =
   "min-h-24 w-full border border-neutral-300 bg-white p-2 text-sm text-neutral-950 outline-none transition focus:border-neutral-900";
 const labelClass = "text-xs font-bold uppercase text-neutral-700";
+const AUTOSAVE_DELAY_MS = 900;
+
+type SaveState = "idle" | "saving" | "saved" | "error";
 
 function blankItem() {
   return { qty: 1, description: "", unitValue: 0 };
@@ -91,14 +94,14 @@ export function QuoteEditor({
   const isFreelance = quoteMode === "freelance";
   const router = useRouter();
   const [isSaving, setIsSaving] = useState(false);
-  const [savedMessage, setSavedMessage] = useState("");
+  const [saveState, setSaveState] = useState<SaveState>("idle");
+  const [isDirty, setIsDirty] = useState(false);
   const prefix = isFreelance ? freelanceSettings.quotePrefix : settings.quotePrefix;
   const signatureDefault = isFreelance ? freelanceSettings.signatureDefault : settings.signatureDefault;
   const defaultProjectCode = isFreelance ? "WEB" : "PT";
   const previewRed = isFreelance ? "bg-blue-700" : "bg-red-800";
   const accentText = isFreelance ? "text-blue-700" : "text-red-800";
   const selectedButton = isFreelance ? "bg-blue-700 text-white" : "bg-red-800 text-white";
-  const editHref = (id: number) => (isFreelance ? `/freelance/quotes/${id}/edit` : `/quotes/${id}/edit`);
   const printHref = (id: number) => (isFreelance ? `/freelance/quotes/${id}/print` : `/quotes/${id}/print`);
   const labels = isFreelance
     ? {
@@ -151,15 +154,31 @@ export function QuoteEditor({
     },
   );
 
+  const formRef = useRef(form);
+  const changeVersionRef = useRef(0);
+  const savingRef = useRef(false);
+  const autoSaveFailedRef = useRef(false);
+
   const totals = useMemo(() => quoteTotals(form.items), [form.items]);
 
+  useEffect(() => {
+    formRef.current = form;
+  }, [form]);
+
+  function markChanged() {
+    changeVersionRef.current += 1;
+    autoSaveFailedRef.current = false;
+    setIsDirty(true);
+    setSaveState("idle");
+  }
+
   function update<K extends keyof QuotePayload>(key: K, value: QuotePayload[K]) {
-    setSavedMessage("");
+    markChanged();
     setForm((current) => ({ ...current, [key]: value }));
   }
 
   function updateItem(index: number, key: "qty" | "description" | "unitValue", value: string) {
-    setSavedMessage("");
+    markChanged();
     setForm((current) => ({
       ...current,
       items: current.items.map((item, itemIndex) =>
@@ -174,7 +193,7 @@ export function QuoteEditor({
     const clientId = value ? Number(value) : null;
     const client = clients.find((item) => item.id === clientId);
 
-    setSavedMessage("");
+    markChanged();
     setForm((current) => ({
       ...current,
       clientId,
@@ -195,7 +214,7 @@ export function QuoteEditor({
   }
 
   function updateTaxMode(taxMode: TaxMode) {
-    setSavedMessage("");
+    markChanged();
     setForm((current) => {
       let exclusions = current.exclusions;
 
@@ -211,27 +230,65 @@ export function QuoteEditor({
     });
   }
 
-  async function submit() {
-    if (isSaving) return;
+  const persist = useCallback(async (manual = false) => {
+    if (savingRef.current || (!manual && (!isDirty || autoSaveFailedRef.current))) return;
 
+    const snapshot = formRef.current;
+    const savedVersion = changeVersionRef.current;
+    savingRef.current = true;
     setIsSaving(true);
+    setSaveState("saving");
+
     try {
-      const result = await saveQuote(form);
+      const result = await saveQuote(snapshot);
       setForm((current) => ({
         ...current,
         id: result.id,
         clientId: result.clientId ?? current.clientId,
       }));
-      setSavedMessage("Cotizacion guardada.");
-      if (!form.id) {
-        router.replace(editHref(result.id));
+
+      if (savedVersion === changeVersionRef.current) {
+        setIsDirty(false);
       }
+      setSaveState("saved");
+
+      if (!snapshot.id) {
+        router.replace(isFreelance ? `/freelance/quotes/${result.id}/edit` : `/quotes/${result.id}/edit`);
+      }
+    } catch {
+      autoSaveFailedRef.current = true;
+      setSaveState("error");
     } finally {
+      savingRef.current = false;
       setIsSaving(false);
     }
+  }, [isDirty, isFreelance, router]);
+
+  useEffect(() => {
+    if (!isDirty || savingRef.current || autoSaveFailedRef.current) return;
+
+    const timeout = window.setTimeout(() => {
+      void persist();
+    }, AUTOSAVE_DELAY_MS);
+
+    return () => window.clearTimeout(timeout);
+  }, [isDirty, persist]);
+
+  function submit() {
+    void persist(true);
   }
 
   const codeWithRevision = displayCode(form.code, form.revision);
+  const saveStatus =
+    saveState === "saving"
+      ? "Guardando cambios..."
+      : saveState === "error"
+        ? "No se pudo guardar automaticamente. Usa Guardar ahora para reintentar."
+        : isDirty
+          ? "Cambios pendientes..."
+          : saveState === "saved"
+            ? "Cambios guardados automaticamente"
+            : "Autoguardado activo";
 
   return (
     <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_420px]">
@@ -253,12 +310,17 @@ export function QuoteEditor({
               </>
             ) : null}
             <button className="button-primary" disabled={isSaving} type="button" onClick={submit}>
-              <Save size={16} /> {isSaving ? "Guardando..." : "Guardar"}
+              <Save size={16} /> {isSaving ? "Guardando..." : "Guardar ahora"}
             </button>
           </div>
         </div>
 
-        {savedMessage ? <p className="border border-green-300 bg-green-50 p-2 text-sm text-green-800">{savedMessage}</p> : null}
+        <p
+          aria-live="polite"
+          className={`text-sm ${saveState === "error" ? "text-red-700" : saveState === "saving" || isDirty ? "text-neutral-600" : "text-green-700"}`}
+        >
+          {saveStatus}
+        </p>
 
         <div className="grid gap-4 lg:grid-cols-4">
           <label className="space-y-1 lg:col-span-2">
@@ -406,7 +468,13 @@ export function QuoteEditor({
                         aria-label="Eliminar item"
                         className="inline-flex size-8 items-center justify-center border border-neutral-300 text-neutral-700 hover:bg-neutral-100"
                         type="button"
-                        onClick={() => setForm((current) => ({ ...current, items: current.items.length > 1 ? current.items.filter((_, itemIndex) => itemIndex !== index) : [blankItem()] }))}
+                        onClick={() => {
+                          markChanged();
+                          setForm((current) => ({
+                            ...current,
+                            items: current.items.length > 1 ? current.items.filter((_, itemIndex) => itemIndex !== index) : [blankItem()],
+                          }));
+                        }}
                       >
                         <Trash2 size={15} />
                       </button>
@@ -417,7 +485,14 @@ export function QuoteEditor({
             </table>
           </div>
 
-          <button className="button-secondary" type="button" onClick={() => setForm((current) => ({ ...current, items: [...current.items, blankItem()] }))}>
+          <button
+            className="button-secondary"
+            type="button"
+            onClick={() => {
+              markChanged();
+              setForm((current) => ({ ...current, items: [...current.items, blankItem()] }));
+            }}
+          >
             <Plus size={16} /> Agregar item
           </button>
         </section>

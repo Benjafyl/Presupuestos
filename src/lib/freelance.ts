@@ -7,7 +7,7 @@ export const freelanceSettings = {
   brand: "BY",
   area: "Desarrollo Web y Soluciones Digitales",
   services: "Sitios web, e-commerce, software a medida, automatizaciones, chatbots y soluciones digitales",
-  email: "benjamin@interchileclima.cl",
+  email: "benjafyl@gmail.com",
 };
 
 export const freelanceTemplate = {

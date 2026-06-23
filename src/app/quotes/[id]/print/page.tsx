@@ -385,7 +385,7 @@ export default async function PrintQuotePage({ params }: PrintQuotePageProps) {
           padding: 20mm 14.5mm 16mm;
           color: #0f172a;
           font-family: Arial, "Liberation Sans", Helvetica, sans-serif;
-          font-size: 10px;
+          font-size: 11px;
           font-weight: 400;
           font-synthesis: none;
           font-kerning: normal;
@@ -429,7 +429,7 @@ export default async function PrintQuotePage({ params }: PrintQuotePageProps) {
         .freelance-brand p {
           margin: 1.1mm 0 0;
           color: #475569;
-          font-size: 9.6px;
+          font-size: 10.5px;
           font-weight: 400;
           line-height: 1.25;
         }
@@ -449,7 +449,7 @@ export default async function PrintQuotePage({ params }: PrintQuotePageProps) {
         .freelance-meta p {
           margin: 0 0 2.1mm;
           color: #0f172a;
-          font-size: 9.6px;
+          font-size: 10.5px;
           font-weight: 600;
           line-height: 1.2;
         }
@@ -466,7 +466,7 @@ export default async function PrintQuotePage({ params }: PrintQuotePageProps) {
           background: #eff6ff;
           padding: 3.2mm 5mm;
           color: #1e3a8a;
-          font-size: 10px;
+          font-size: 10.8px;
           font-weight: 700;
           line-height: 1.28;
         }
@@ -487,14 +487,14 @@ export default async function PrintQuotePage({ params }: PrintQuotePageProps) {
           display: block;
           margin-bottom: 0.8mm;
           color: #64748b;
-          font-size: 7.4px;
+          font-size: 8.2px;
           font-weight: 700;
           text-transform: uppercase;
         }
 
         .freelance-client strong {
           color: #111827;
-          font-size: 9.2px;
+          font-size: 10.4px;
           font-weight: 700;
           line-height: 1.22;
           overflow-wrap: normal;
@@ -510,7 +510,7 @@ export default async function PrintQuotePage({ params }: PrintQuotePageProps) {
         .freelance-notes h3 {
           margin: 0 0 2.1mm;
           color: #0f172a;
-          font-size: 10.2px;
+          font-size: 11.2px;
           font-weight: 700;
           line-height: 1.2;
         }
@@ -519,8 +519,8 @@ export default async function PrintQuotePage({ params }: PrintQuotePageProps) {
         .freelance-notes p {
           margin: 0;
           color: #0f172a;
-          font-size: 8.6px;
-          line-height: 1.28;
+          font-size: 10px;
+          line-height: 1.34;
         }
 
         .freelance-table {
@@ -528,7 +528,7 @@ export default async function PrintQuotePage({ params }: PrintQuotePageProps) {
           border-collapse: collapse;
           table-layout: fixed;
           margin-bottom: 5.8mm;
-          font-size: 8.7px;
+          font-size: 10px;
           font-variant-numeric: tabular-nums;
           font-feature-settings: "tnum";
           page-break-inside: auto;
@@ -549,7 +549,7 @@ export default async function PrintQuotePage({ params }: PrintQuotePageProps) {
           background: #2563eb;
           color: #fff;
           padding: 6px 5px;
-          font-size: 8.8px;
+          font-size: 9.8px;
           font-weight: 700;
           text-align: left;
           line-height: 1.15;
@@ -596,7 +596,7 @@ export default async function PrintQuotePage({ params }: PrintQuotePageProps) {
         .freelance-grand-total td {
           background: #eff6ff;
           color: #1d4ed8;
-          font-size: 9.4px;
+          font-size: 10.6px;
           font-weight: 700;
         }
 
@@ -614,17 +614,52 @@ export default async function PrintQuotePage({ params }: PrintQuotePageProps) {
           margin-top: 5.2mm;
           padding-top: 0;
           color: #0f172a;
-          font-size: 9.2px;
+          font-size: 10.4px;
           font-weight: 700;
           line-height: 1.42;
           break-inside: avoid;
           page-break-inside: avoid;
         }
 
+        .freelance-content-dense {
+          padding-top: 16mm;
+          padding-bottom: 10mm;
+        }
+
+        .freelance-content-dense .freelance-header {
+          padding-bottom: 5.5mm;
+        }
+
+        .freelance-content-dense .freelance-intro {
+          margin: 4.5mm 0;
+          padding-top: 2.6mm;
+          padding-bottom: 2.6mm;
+        }
+
+        .freelance-content-dense .freelance-client {
+          margin-bottom: 4.5mm;
+        }
+
+        .freelance-content-dense .freelance-description {
+          margin-bottom: 4.5mm;
+        }
+
+        .freelance-content-dense .freelance-table {
+          margin-bottom: 4mm;
+        }
+
+        .freelance-content-dense .freelance-notes {
+          gap: 2.5mm;
+        }
+
+        .freelance-content-dense .freelance-signature {
+          margin-top: 3.5mm;
+        }
+
         .freelance-density-tight {
-          padding-top: 17mm;
-          padding-bottom: 13mm;
-          font-size: 9.6px;
+          padding-top: 18mm;
+          padding-bottom: 14mm;
+          font-size: 10px;
         }
 
         .freelance-density-tight .freelance-header {
@@ -648,7 +683,7 @@ export default async function PrintQuotePage({ params }: PrintQuotePageProps) {
 
         .freelance-density-tight .freelance-table {
           margin-bottom: 4.5mm;
-          font-size: 8.2px;
+          font-size: 9.3px;
         }
 
         .freelance-density-tight .freelance-table th,
@@ -666,9 +701,9 @@ export default async function PrintQuotePage({ params }: PrintQuotePageProps) {
         }
 
         .freelance-density-compact {
-          padding-top: 15mm;
-          padding-bottom: 11mm;
-          font-size: 9px;
+          padding-top: 16mm;
+          padding-bottom: 12mm;
+          font-size: 9.5px;
         }
 
         .freelance-density-compact .freelance-header {
@@ -692,7 +727,7 @@ export default async function PrintQuotePage({ params }: PrintQuotePageProps) {
 
         .freelance-density-compact .freelance-table {
           margin-bottom: 3.5mm;
-          font-size: 7.8px;
+          font-size: 8.8px;
         }
 
         .freelance-density-compact .freelance-table th,

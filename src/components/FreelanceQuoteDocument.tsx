@@ -44,10 +44,12 @@ export function FreelanceQuoteDocument({ quote }: FreelanceQuoteDocumentProps) {
   const showsIva = quote.taxMode === "IVA_INCLUDED";
   const code = displayCode(quote.code, quote.revision);
   const densityClass =
-    quote.items.length >= 10 ? "freelance-density-compact" : quote.items.length >= 6 ? "freelance-density-tight" : "";
+    quote.items.length >= 14 ? "freelance-density-compact" : quote.items.length >= 8 ? "freelance-density-tight" : "";
+  const contentLength = [quote.mainText, quote.exclusions, quote.warranty, quote.executionTime, quote.signature].join("").length;
+  const contentDensityClass = contentLength >= 900 ? "freelance-content-dense" : "";
 
   return (
-    <main className={`freelance-sheet ${densityClass}`}>
+    <main className={`freelance-sheet ${densityClass} ${contentDensityClass}`}>
       <header className="freelance-header">
         <section className="freelance-brand">
           <Image
