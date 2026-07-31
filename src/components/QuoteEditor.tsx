@@ -534,7 +534,7 @@ export function QuoteEditor({
               </div>
             )}
             <div className="text-right">
-              <p className="text-base font-bold">{isFreelance ? "PRESUPUESTO" : "COTIZACION"}</p>
+              <p className="text-base font-bold">PRESUPUESTO</p>
               <p className="font-bold">Nro {codeWithRevision}</p>
               <p className="mt-2 font-bold">{isFreelance ? freelanceSettings.email : "RUT: 76.093.202-7"}</p>
             </div>

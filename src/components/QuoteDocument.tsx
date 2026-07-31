@@ -68,7 +68,7 @@ export function QuoteDocument({ settings, quote }: QuoteDocumentProps) {
           <p>{settings.address}</p>
         </section>
         <section className="quote-meta">
-          <h1 className="quote-title">COTIZACIÓN</h1>
+          <h1 className="quote-title">PRESUPUESTO</h1>
           <div className="quote-meta-row">
             <strong className="quote-meta-label">Nº</strong>
             <strong className="quote-meta-value">{code}</strong>
