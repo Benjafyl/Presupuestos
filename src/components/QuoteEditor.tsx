@@ -75,6 +75,10 @@ function blankSection() {
   return { rowType: "section" as QuoteItemRowType, qty: 0, description: "NUEVO TITULO", unitValue: 0 };
 }
 
+function isBlankDefaultItem(item: QuotePayload["items"][number]) {
+  return item.rowType !== "section" && Number(item.qty) === 1 && !item.description.trim() && Number(item.unitValue) === 0;
+}
+
 function isDefaultNetExclusions(value: string) {
   const normalized = value
     .normalize("NFD")
@@ -234,6 +238,33 @@ export function QuoteEditor({
       }
 
       return { ...current, taxMode, exclusions };
+    });
+  }
+
+  function addItem() {
+    markChanged();
+    setForm((current) => ({ ...current, items: [...current.items, blankItem()] }));
+  }
+
+  function addSection() {
+    markChanged();
+    setForm((current) => {
+      if (current.items.length === 1 && isBlankDefaultItem(current.items[0])) {
+        return { ...current, items: [blankSection()] };
+      }
+
+      return { ...current, items: [...current.items, blankSection()] };
+    });
+  }
+
+  function addSectionAtStart() {
+    markChanged();
+    setForm((current) => {
+      if (current.items.length === 1 && isBlankDefaultItem(current.items[0])) {
+        return { ...current, items: [blankSection()] };
+      }
+
+      return { ...current, items: [blankSection(), ...current.items] };
     });
   }
 
@@ -542,22 +573,23 @@ export function QuoteEditor({
             <button
               className="button-secondary"
               type="button"
-              onClick={() => {
-                markChanged();
-                setForm((current) => ({ ...current, items: [...current.items, blankItem()] }));
-              }}
+              onClick={addItem}
             >
               <Plus size={16} /> Agregar item
             </button>
             <button
               className="button-secondary"
               type="button"
-              onClick={() => {
-                markChanged();
-                setForm((current) => ({ ...current, items: [...current.items, blankSection()] }));
-              }}
+              onClick={addSection}
             >
               <Plus size={16} /> Agregar titulo
+            </button>
+            <button
+              className="button-secondary"
+              type="button"
+              onClick={addSectionAtStart}
+            >
+              <Plus size={16} /> Agregar titulo arriba
             </button>
           </div>
         </section>
