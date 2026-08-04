@@ -2,7 +2,7 @@ export type Currency = "UF" | "CLP";
 export type Revision = "" | "REV01" | "REV02" | "REV03";
 export type TaxMode = "NET" | "IVA_INCLUDED";
 export type QuoteMode = "interchile" | "freelance";
-export type QuoteItemRowType = "item" | "section";
+export type QuoteItemRowType = "item" | "section" | "subtotal";
 
 export const REVISION_OPTIONS: Revision[] = ["", "REV01", "REV02", "REV03"];
 export const CURRENCY_OPTIONS: Currency[] = ["CLP", "UF"];
@@ -71,8 +71,16 @@ export function isSectionRow(item: { rowType?: string | null }) {
   return item.rowType === "section";
 }
 
+export function isSubtotalRow(item: { rowType?: string | null }) {
+  return item.rowType === "subtotal";
+}
+
+export function isItemRow(item: { rowType?: string | null }) {
+  return !isSectionRow(item) && !isSubtotalRow(item);
+}
+
 export function quoteTotals(items: { rowType?: string | null; qty: number | string; unitValue: number | string }[]) {
-  const itemTotals = items.map((item) => (isSectionRow(item) ? 0 : itemTotal(Number(item.qty) || 0, Number(item.unitValue) || 0)));
+  const itemTotals = items.map((item) => (isItemRow(item) ? itemTotal(Number(item.qty) || 0, Number(item.unitValue) || 0) : 0));
   const net = roundMoney(itemTotals.reduce((sum, value) => sum + value, 0));
   const iva = roundMoney(net * IVA_RATE);
   const gross = roundMoney(net + iva);
@@ -103,6 +111,7 @@ export type QuoteTableRow =
     }
   | {
       kind: "subtotal";
+      sourceIndex: number | null;
       label: string;
       total: number;
     };
@@ -110,30 +119,42 @@ export type QuoteTableRow =
 export function quoteTableRows(items: QuoteTableItem[]) {
   const rows: QuoteTableRow[] = [];
   let itemPosition = 1;
-  let activeSection = "";
-  let sectionSubtotal = 0;
-  let sectionItemCount = 0;
+  let subtotal = 0;
+  let subtotalItemCount = 0;
+  let firstSection = "";
+  let sectionCount = 0;
+  const hasManualSubtotal = items.some(isSubtotalRow);
 
-  function flushSubtotal() {
-    if (!activeSection || sectionItemCount === 0) return;
+  function pushSubtotal(sourceIndex: number | null, label: string) {
+    if (sourceIndex === null && subtotalItemCount === 0) return;
     rows.push({
       kind: "subtotal",
-      label: `Subtotal ${activeSection}`,
-      total: roundMoney(sectionSubtotal),
+      sourceIndex,
+      label,
+      total: roundMoney(subtotal),
     });
+    subtotal = 0;
+    subtotalItemCount = 0;
   }
 
   items.forEach((item, index) => {
     if (isSectionRow(item)) {
-      flushSubtotal();
-      activeSection = item.description.trim();
-      sectionSubtotal = 0;
-      sectionItemCount = 0;
+      const title = item.description.trim();
+      if (title) {
+        sectionCount += 1;
+        firstSection ||= title;
+      }
+
       rows.push({
         kind: "section",
         sourceIndex: index,
-        title: activeSection || "Titulo",
+        title: title || "Titulo",
       });
+      return;
+    }
+
+    if (isSubtotalRow(item)) {
+      pushSubtotal(index, item.description.trim() || "Subtotal");
       return;
     }
 
@@ -147,13 +168,13 @@ export function quoteTableRows(items: QuoteTableItem[]) {
     });
     itemPosition += 1;
 
-    if (activeSection) {
-      sectionSubtotal = roundMoney(sectionSubtotal + total);
-      sectionItemCount += 1;
-    }
+    subtotal = roundMoney(subtotal + total);
+    subtotalItemCount += 1;
   });
 
-  flushSubtotal();
+  if (!hasManualSubtotal && sectionCount > 0) {
+    pushSubtotal(null, sectionCount === 1 && firstSection ? `Subtotal ${firstSection}` : "Subtotal");
+  }
 
   return rows;
 }

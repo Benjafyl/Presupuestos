@@ -75,6 +75,10 @@ function blankSection() {
   return { rowType: "section" as QuoteItemRowType, qty: 0, description: "NUEVO TITULO", unitValue: 0 };
 }
 
+function blankSubtotal() {
+  return { rowType: "subtotal" as QuoteItemRowType, qty: 0, description: "SUBTOTAL", unitValue: 0 };
+}
+
 function isBlankDefaultItem(item: QuotePayload["items"][number]) {
   return item.rowType !== "section" && Number(item.qty) === 1 && !item.description.trim() && Number(item.unitValue) === 0;
 }
@@ -266,6 +270,11 @@ export function QuoteEditor({
 
       return { ...current, items: [blankSection(), ...current.items] };
     });
+  }
+
+  function addSubtotal() {
+    markChanged();
+    setForm((current) => ({ ...current, items: [...current.items, blankSubtotal()] }));
   }
 
   const persist = useCallback(async (manual = false) => {
@@ -520,13 +529,40 @@ export function QuoteEditor({
                   }
 
                   if (row.kind === "subtotal") {
+                    const subtotalSourceIndex = row.sourceIndex;
+
                     return (
                       <tr className="bg-neutral-50" key={`subtotal-${rowIndex}`}>
                         <td className="border border-neutral-300 p-2 text-right text-xs font-bold uppercase" colSpan={4}>
-                          {row.label}
+                          {subtotalSourceIndex === null ? (
+                            row.label
+                          ) : (
+                            <input
+                              className="h-8 w-full border border-neutral-200 bg-white px-2 text-right font-bold uppercase"
+                              value={form.items[subtotalSourceIndex]?.description ?? ""}
+                              onChange={(event) => updateItem(subtotalSourceIndex, "description", event.target.value)}
+                            />
+                          )}
                         </td>
                         <td className="border border-neutral-300 p-2 text-right font-bold">{formatMoney(row.total)}</td>
-                        <td className="border border-neutral-300 p-1"></td>
+                        <td className="border border-neutral-300 p-1 text-center">
+                          {subtotalSourceIndex === null ? null : (
+                            <button
+                              aria-label="Eliminar subtotal"
+                              className="inline-flex size-8 items-center justify-center border border-neutral-300 text-neutral-700 hover:bg-neutral-100"
+                              type="button"
+                              onClick={() => {
+                                markChanged();
+                                setForm((current) => ({
+                                  ...current,
+                                  items: current.items.length > 1 ? current.items.filter((_, itemIndex) => itemIndex !== subtotalSourceIndex) : [blankItem()],
+                                }));
+                              }}
+                            >
+                              <Trash2 size={15} />
+                            </button>
+                          )}
+                        </td>
                       </tr>
                     );
                   }
@@ -590,6 +626,13 @@ export function QuoteEditor({
               onClick={addSectionAtStart}
             >
               <Plus size={16} /> Agregar titulo arriba
+            </button>
+            <button
+              className="button-secondary"
+              type="button"
+              onClick={addSubtotal}
+            >
+              <Plus size={16} /> Agregar subtotal
             </button>
           </div>
         </section>

@@ -68,17 +68,23 @@ function cleanQuotePayload(payload: QuotePayload, prefix: string) {
   const code = payload.code.trim() || buildQuoteCode(prefix, payload.projectCode, payload.quoteDate);
   const items = payload.items
     .map((item, index) => {
-      const rowType: QuoteItemRowType = item.rowType === "section" ? "section" : "item";
+      const rowType: QuoteItemRowType =
+        item.rowType === "section" || item.rowType === "subtotal" ? item.rowType : "item";
+      const isTextRow = rowType === "section" || rowType === "subtotal";
 
       return {
         rowType,
         position: index + 1,
-        qty: rowType === "section" ? 0 : parseNumber(item.qty),
+        qty: isTextRow ? 0 : parseNumber(item.qty),
         description: item.description.trim(),
-        unitValue: rowType === "section" ? 0 : parseNumber(item.unitValue),
+        unitValue: isTextRow ? 0 : parseNumber(item.unitValue),
       };
     })
-    .filter((item) => (item.rowType === "section" ? item.description : item.description || item.qty > 0 || item.unitValue > 0));
+    .filter((item) =>
+      item.rowType === "section" || item.rowType === "subtotal"
+        ? item.description
+        : item.description || item.qty > 0 || item.unitValue > 0,
+    );
 
   return {
     quoteMode: payload.quoteMode,
