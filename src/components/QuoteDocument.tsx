@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { displayCode, formatMoney, quoteTotals, toDisplayDate } from "@/lib/quote-format";
+import { displayCode, formatMoney, quoteTableRows, quoteTotals, toDisplayDate } from "@/lib/quote-format";
 
 type QuoteDocumentProps = {
   settings: {
@@ -26,6 +26,7 @@ type QuoteDocumentProps = {
     executionTime: string;
     signature: string;
     items: {
+      rowType?: string | null;
       position: number;
       qty: number;
       description: string;
@@ -57,6 +58,7 @@ function signatureLines(value: string) {
 
 export function QuoteDocument({ settings, quote }: QuoteDocumentProps) {
   const totals = quoteTotals(quote.items);
+  const tableRows = quoteTableRows(quote.items);
   const code = displayCode(quote.code, quote.revision);
   const showsIva = quote.taxMode === "IVA_INCLUDED";
 
@@ -135,15 +137,34 @@ export function QuoteDocument({ settings, quote }: QuoteDocumentProps) {
           </tr>
         </thead>
         <tbody>
-          {quote.items.map((item, index) => (
-            <tr key={item.position}>
-              <td className="center">{item.position}</td>
-              <td className="center">{formatMoney(item.qty).replace(",00", "")}</td>
-              <td>{item.description}</td>
-              <td className="money-cell">{formatMoney(item.unitValue)}</td>
-              <td className="money-cell item-total">{formatMoney(totals.itemTotals[index] ?? 0)}</td>
-            </tr>
-          ))}
+          {tableRows.map((row, index) => {
+            if (row.kind === "section") {
+              return (
+                <tr className="section-row" key={`section-${row.sourceIndex}`}>
+                  <td colSpan={5}>{row.title}</td>
+                </tr>
+              );
+            }
+
+            if (row.kind === "subtotal") {
+              return (
+                <tr className="section-subtotal-row" key={`subtotal-${index}`}>
+                  <td className="totals-label" colSpan={4}>{row.label}</td>
+                  <td className="totals-value">{formatMoney(row.total)}</td>
+                </tr>
+              );
+            }
+
+            return (
+              <tr key={`item-${row.sourceIndex}`}>
+                <td className="center">{row.itemPosition}</td>
+                <td className="center">{formatMoney(Number(row.item.qty) || 0).replace(",00", "")}</td>
+                <td>{row.item.description}</td>
+                <td className="money-cell">{formatMoney(Number(row.item.unitValue) || 0)}</td>
+                <td className="money-cell item-total">{formatMoney(row.total)}</td>
+              </tr>
+            );
+          })}
           <tr className="net-row">
             <td className="totals-label" colSpan={4}>{showsIva ? "Subtotal neto" : "Valor Total Neto"}</td>
             <td className="totals-value">{formatMoney(totals.net)}</td>

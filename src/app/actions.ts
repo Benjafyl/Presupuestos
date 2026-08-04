@@ -8,6 +8,7 @@ import {
   buildQuoteCode,
   Currency,
   parseNumber,
+  QuoteItemRowType,
   QuoteMode,
   Revision,
   TaxMode,
@@ -17,6 +18,7 @@ import { freelanceSettings } from "@/lib/freelance";
 
 export type QuoteItemPayload = {
   id?: number;
+  rowType?: QuoteItemRowType;
   qty: number | string;
   description: string;
   unitValue: number | string;
@@ -65,13 +67,18 @@ function parseQuoteDate(input: string) {
 function cleanQuotePayload(payload: QuotePayload, prefix: string) {
   const code = payload.code.trim() || buildQuoteCode(prefix, payload.projectCode, payload.quoteDate);
   const items = payload.items
-    .map((item, index) => ({
-      position: index + 1,
-      qty: parseNumber(item.qty),
-      description: item.description.trim(),
-      unitValue: parseNumber(item.unitValue),
-    }))
-    .filter((item) => item.description || item.qty > 0 || item.unitValue > 0);
+    .map((item, index) => {
+      const rowType: QuoteItemRowType = item.rowType === "section" ? "section" : "item";
+
+      return {
+        rowType,
+        position: index + 1,
+        qty: rowType === "section" ? 0 : parseNumber(item.qty),
+        description: item.description.trim(),
+        unitValue: rowType === "section" ? 0 : parseNumber(item.unitValue),
+      };
+    })
+    .filter((item) => (item.rowType === "section" ? item.description : item.description || item.qty > 0 || item.unitValue > 0));
 
   return {
     quoteMode: payload.quoteMode,
@@ -210,6 +217,7 @@ export async function duplicateQuote(id: number) {
       items: {
         create: quote.items.map((item) => ({
           position: item.position,
+          rowType: item.rowType,
           qty: item.qty,
           description: item.description,
           unitValue: item.unitValue,

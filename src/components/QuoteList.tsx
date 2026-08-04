@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Copy, FileDown, Pencil, Plus } from "lucide-react";
 import { duplicateQuote } from "@/app/actions";
 import { getPrisma } from "@/lib/prisma";
-import { displayCode, formatMoney, itemTotal, QuoteMode, toDisplayDate } from "@/lib/quote-format";
+import { displayCode, formatMoney, quoteTotals, QuoteMode, toDisplayDate } from "@/lib/quote-format";
 
 type QuoteListProps = {
   mode: QuoteMode;
@@ -60,7 +60,7 @@ export async function QuoteList({
               </tr>
             ) : (
               quotes.map((quote) => {
-                const total = quote.items.reduce((sum, item) => sum + itemTotal(item.qty, item.unitValue), 0);
+                const total = quoteTotals(quote.items).net;
                 return (
                   <tr key={quote.id} className="border-b border-neutral-200 last:border-b-0">
                     <td className="p-3 font-mono text-xs font-bold">{displayCode(quote.code, quote.revision)}</td>

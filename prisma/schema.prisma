@@ -70,6 +70,7 @@ model QuoteItem {
   id          Int    @id @default(autoincrement())
   quoteId     Int
   quote       Quote  @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  rowType     String @default("item")
   position    Int
   qty         Float
   description String

@@ -52,6 +52,7 @@ export default async function EditQuotePage({ params }: EditQuotePageProps) {
     signature: quote.signature,
     items: quote.items.map((item) => ({
       id: item.id,
+      rowType: item.rowType === "section" ? "section" : "item",
       qty: item.qty,
       description: item.description,
       unitValue: item.unitValue,

@@ -68,6 +68,7 @@ CREATE TABLE IF NOT EXISTS Quote (
 CREATE TABLE IF NOT EXISTS QuoteItem (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   quoteId INTEGER NOT NULL,
+  rowType TEXT NOT NULL DEFAULT 'item',
   position INTEGER NOT NULL,
   qty REAL NOT NULL,
   description TEXT NOT NULL,
@@ -92,6 +93,11 @@ if (!quoteColumns.some((column) => column.name === "quoteMode")) {
 
 if (!quoteColumns.some((column) => column.name === "taxMode")) {
   db.exec("ALTER TABLE Quote ADD COLUMN taxMode TEXT NOT NULL DEFAULT 'NET';");
+}
+
+const quoteItemColumns = db.prepare("PRAGMA table_info(QuoteItem)").all();
+if (!quoteItemColumns.some((column) => column.name === "rowType")) {
+  db.exec("ALTER TABLE QuoteItem ADD COLUMN rowType TEXT NOT NULL DEFAULT 'item';");
 }
 
 const settingsCount = db.prepare("SELECT COUNT(*) AS count FROM CompanySettings").get().count;

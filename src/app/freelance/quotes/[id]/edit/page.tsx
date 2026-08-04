@@ -50,6 +50,7 @@ export default async function EditFreelanceQuotePage({ params }: EditFreelanceQu
     signature: quote.signature,
     items: quote.items.map((item) => ({
       id: item.id,
+      rowType: item.rowType === "section" ? "section" : "item",
       qty: item.qty,
       description: item.description,
       unitValue: item.unitValue,

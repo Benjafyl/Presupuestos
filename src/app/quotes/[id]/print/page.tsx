@@ -294,6 +294,25 @@ export default async function PrintQuotePage({ params }: PrintQuotePageProps) {
           font-weight: 650;
         }
 
+        .items-table .section-row td {
+          background: #f7e6e5;
+          color: #7f1d1d;
+          font-size: 10.6px;
+          font-weight: 700;
+          text-transform: uppercase;
+          border-color: var(--quote-line);
+          padding: 5px 7px;
+        }
+
+        .items-table .section-subtotal-row td {
+          background: #fafafa;
+          font-weight: 650;
+          text-align: right;
+          border-color: var(--quote-line);
+          padding-top: 5px;
+          padding-bottom: 5px;
+        }
+
         .net-row td {
           padding-top: 6px;
           padding-bottom: 6px;
@@ -582,6 +601,26 @@ export default async function PrintQuotePage({ params }: PrintQuotePageProps) {
           padding-right: 10px;
           text-align: right;
           white-space: nowrap;
+        }
+
+        .freelance-table .section-row td {
+          background: #eff6ff;
+          border-bottom: 1px solid #93c5fd;
+          color: #1d4ed8;
+          font-size: 10px;
+          font-weight: 700;
+          text-transform: uppercase;
+          padding: 5px 6px;
+        }
+
+        .freelance-table .section-subtotal-row td {
+          background: #f8fafc;
+          border-bottom: 1px solid #94a3b8;
+          color: #0f172a;
+          font-weight: 700;
+          text-align: right;
+          padding-top: 5px;
+          padding-bottom: 5px;
         }
 
         .freelance-total-row td {

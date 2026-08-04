@@ -14,7 +14,9 @@ import {
   formatMoney,
   IVA_INCLUDED_EXCLUSIONS_TEXT,
   NET_EXCLUSIONS_TEXT,
+  quoteTableRows,
   quoteTotals,
+  QuoteItemRowType,
   QuoteMode,
   REVISION_OPTIONS,
   Revision,
@@ -66,7 +68,11 @@ const AUTOSAVE_DELAY_MS = 900;
 type SaveState = "idle" | "saving" | "saved" | "error";
 
 function blankItem() {
-  return { qty: 1, description: "", unitValue: 0 };
+  return { rowType: "item" as QuoteItemRowType, qty: 1, description: "", unitValue: 0 };
+}
+
+function blankSection() {
+  return { rowType: "section" as QuoteItemRowType, qty: 0, description: "NUEVO TITULO", unitValue: 0 };
 }
 
 function isDefaultNetExclusions(value: string) {
@@ -160,6 +166,7 @@ export function QuoteEditor({
   const autoSaveFailedRef = useRef(false);
 
   const totals = useMemo(() => quoteTotals(form.items), [form.items]);
+  const tableRows = useMemo(() => quoteTableRows(form.items.map((item, index) => ({ ...item, position: index + 1 }))), [form.items]);
 
   useEffect(() => {
     formRef.current = form;
@@ -450,51 +457,109 @@ export function QuoteEditor({
                 </tr>
               </thead>
               <tbody>
-                {form.items.map((item, index) => (
-                  <tr key={index}>
-                    <td className="border border-neutral-300 p-1 text-center font-semibold">{index + 1}</td>
-                    <td className="border border-neutral-300 p-1">
-                      <input className="h-8 w-full border border-neutral-200 px-2 text-right" min="0" step="0.01" type="number" value={item.qty} onChange={(event) => updateItem(index, "qty", event.target.value)} />
-                    </td>
-                    <td className="border border-neutral-300 p-1">
-                      <input className="h-8 w-full border border-neutral-200 px-2" value={item.description} onChange={(event) => updateItem(index, "description", event.target.value)} />
-                    </td>
-                    <td className="border border-neutral-300 p-1">
-                      <input className="h-8 w-full border border-neutral-200 px-2 text-right" min="0" step="0.01" type="number" value={item.unitValue} onChange={(event) => updateItem(index, "unitValue", event.target.value)} />
-                    </td>
-                    <td className="border border-neutral-300 p-2 text-right font-bold">{formatMoney(totals.itemTotals[index] ?? 0)}</td>
-                    <td className="border border-neutral-300 p-1 text-center">
-                      <button
-                        aria-label="Eliminar item"
-                        className="inline-flex size-8 items-center justify-center border border-neutral-300 text-neutral-700 hover:bg-neutral-100"
-                        type="button"
-                        onClick={() => {
-                          markChanged();
-                          setForm((current) => ({
-                            ...current,
-                            items: current.items.length > 1 ? current.items.filter((_, itemIndex) => itemIndex !== index) : [blankItem()],
-                          }));
-                        }}
-                      >
-                        <Trash2 size={15} />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+                {tableRows.map((row, rowIndex) => {
+                  if (row.kind === "section") {
+                    return (
+                      <tr className="bg-neutral-100" key={`section-${row.sourceIndex}`}>
+                        <td className="border border-neutral-300 p-2 text-xs font-bold uppercase text-neutral-600" colSpan={5}>
+                          <input
+                            className="h-8 w-full border border-neutral-200 bg-white px-2 font-bold uppercase"
+                            value={form.items[row.sourceIndex]?.description ?? ""}
+                            onChange={(event) => updateItem(row.sourceIndex, "description", event.target.value)}
+                          />
+                        </td>
+                        <td className="border border-neutral-300 p-1 text-center">
+                          <button
+                            aria-label="Eliminar titulo"
+                            className="inline-flex size-8 items-center justify-center border border-neutral-300 text-neutral-700 hover:bg-neutral-100"
+                            type="button"
+                            onClick={() => {
+                              markChanged();
+                              setForm((current) => ({
+                                ...current,
+                                items: current.items.length > 1 ? current.items.filter((_, itemIndex) => itemIndex !== row.sourceIndex) : [blankItem()],
+                              }));
+                            }}
+                          >
+                            <Trash2 size={15} />
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  }
+
+                  if (row.kind === "subtotal") {
+                    return (
+                      <tr className="bg-neutral-50" key={`subtotal-${rowIndex}`}>
+                        <td className="border border-neutral-300 p-2 text-right text-xs font-bold uppercase" colSpan={4}>
+                          {row.label}
+                        </td>
+                        <td className="border border-neutral-300 p-2 text-right font-bold">{formatMoney(row.total)}</td>
+                        <td className="border border-neutral-300 p-1"></td>
+                      </tr>
+                    );
+                  }
+
+                  const item = row.item;
+
+                  return (
+                    <tr key={`item-${row.sourceIndex}`}>
+                      <td className="border border-neutral-300 p-1 text-center font-semibold">{row.itemPosition}</td>
+                      <td className="border border-neutral-300 p-1">
+                        <input className="h-8 w-full border border-neutral-200 px-2 text-right" min="0" step="0.01" type="number" value={item.qty} onChange={(event) => updateItem(row.sourceIndex, "qty", event.target.value)} />
+                      </td>
+                      <td className="border border-neutral-300 p-1">
+                        <input className="h-8 w-full border border-neutral-200 px-2" value={item.description} onChange={(event) => updateItem(row.sourceIndex, "description", event.target.value)} />
+                      </td>
+                      <td className="border border-neutral-300 p-1">
+                        <input className="h-8 w-full border border-neutral-200 px-2 text-right" min="0" step="0.01" type="number" value={item.unitValue} onChange={(event) => updateItem(row.sourceIndex, "unitValue", event.target.value)} />
+                      </td>
+                      <td className="border border-neutral-300 p-2 text-right font-bold">{formatMoney(row.total)}</td>
+                      <td className="border border-neutral-300 p-1 text-center">
+                        <button
+                          aria-label="Eliminar item"
+                          className="inline-flex size-8 items-center justify-center border border-neutral-300 text-neutral-700 hover:bg-neutral-100"
+                          type="button"
+                          onClick={() => {
+                            markChanged();
+                            setForm((current) => ({
+                              ...current,
+                              items: current.items.length > 1 ? current.items.filter((_, itemIndex) => itemIndex !== row.sourceIndex) : [blankItem()],
+                            }));
+                          }}
+                        >
+                          <Trash2 size={15} />
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
 
-          <button
-            className="button-secondary"
-            type="button"
-            onClick={() => {
-              markChanged();
-              setForm((current) => ({ ...current, items: [...current.items, blankItem()] }));
-            }}
-          >
-            <Plus size={16} /> Agregar item
-          </button>
+          <div className="flex flex-wrap gap-2">
+            <button
+              className="button-secondary"
+              type="button"
+              onClick={() => {
+                markChanged();
+                setForm((current) => ({ ...current, items: [...current.items, blankItem()] }));
+              }}
+            >
+              <Plus size={16} /> Agregar item
+            </button>
+            <button
+              className="button-secondary"
+              type="button"
+              onClick={() => {
+                markChanged();
+                setForm((current) => ({ ...current, items: [...current.items, blankSection()] }));
+              }}
+            >
+              <Plus size={16} /> Agregar titulo
+            </button>
+          </div>
         </section>
 
         <section className="grid gap-4 border-t border-neutral-200 pt-5 lg:grid-cols-3">
@@ -563,15 +628,36 @@ export function QuoteEditor({
               </tr>
             </thead>
             <tbody>
-              {form.items.map((item, index) => (
-                <tr key={index}>
-                  <td className="border border-black text-center">{index + 1}</td>
-                  <td className="border border-black text-center">{item.qty}</td>
-                  <td className="border border-black px-1">{item.description}</td>
-                  <td className="border border-black text-right">{formatMoney(Number(item.unitValue) || 0)}</td>
-                  <td className="border border-black text-right font-bold">{formatMoney(totals.itemTotals[index] ?? 0)}</td>
-                </tr>
-              ))}
+              {tableRows.map((row, index) => {
+                if (row.kind === "section") {
+                  return (
+                    <tr key={`preview-section-${row.sourceIndex}`}>
+                      <td className={`border border-black px-1 font-bold uppercase text-white ${previewRed}`} colSpan={5}>
+                        {row.title}
+                      </td>
+                    </tr>
+                  );
+                }
+
+                if (row.kind === "subtotal") {
+                  return (
+                    <tr key={`preview-subtotal-${index}`}>
+                      <td className="border border-black text-right font-bold" colSpan={4}>{row.label}</td>
+                      <td className="border border-black text-right font-bold">{formatMoney(row.total)}</td>
+                    </tr>
+                  );
+                }
+
+                return (
+                  <tr key={`preview-item-${row.sourceIndex}`}>
+                    <td className="border border-black text-center">{row.itemPosition}</td>
+                    <td className="border border-black text-center">{row.item.qty}</td>
+                    <td className="border border-black px-1">{row.item.description}</td>
+                    <td className="border border-black text-right">{formatMoney(Number(row.item.unitValue) || 0)}</td>
+                    <td className="border border-black text-right font-bold">{formatMoney(row.total)}</td>
+                  </tr>
+                );
+              })}
               <tr>
                 <td className="border border-black text-right font-bold" colSpan={4}>{form.taxMode === "NET" ? "Valor Total Neto" : "Subtotal neto"}</td>
                 <td className="border border-black text-right font-bold">{formatMoney(totals.net)}</td>
