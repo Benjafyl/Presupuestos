@@ -8,7 +8,24 @@ const labelClass = "text-xs font-bold uppercase text-neutral-700";
 export const dynamic = "force-dynamic";
 
 export default async function ClientsPage() {
-  const clients = await getPrisma().client.findMany({ orderBy: { updatedAt: "desc" } });
+  const clients = await getPrisma().client.findMany({
+    orderBy: { updatedAt: "desc" },
+    include: { branches: { orderBy: [{ branch: "asc" }, { commune: "asc" }] } },
+  });
+  const clientRows: Array<{
+    client: (typeof clients)[number];
+    branch: (typeof clients)[number]["branches"][number] | null;
+  }> = [];
+
+  for (const client of clients) {
+    if (client.branches.length === 0) {
+      clientRows.push({ client, branch: null });
+    } else {
+      for (const branch of client.branches) {
+        clientRows.push({ client, branch });
+      }
+    }
+  }
 
   return (
     <AppShell>
@@ -70,21 +87,21 @@ export default async function ClientsPage() {
             </tr>
           </thead>
           <tbody>
-            {clients.length === 0 ? (
+            {clientRows.length === 0 ? (
               <tr>
                 <td className="p-8 text-center text-neutral-500" colSpan={6}>
                   No hay clientes guardados.
                 </td>
               </tr>
             ) : (
-              clients.map((client) => (
-                <tr key={client.id} className="border-b border-neutral-200 last:border-b-0">
+              clientRows.map(({ client, branch }) => (
+                <tr key={`${client.id}-${branch?.id ?? "legacy"}`} className="border-b border-neutral-200 last:border-b-0">
                   <td className="p-3 font-semibold">{client.name}</td>
                   <td className="p-3">{client.rut}</td>
-                  <td className="p-3">{client.branch}</td>
-                  <td className="p-3">{client.commune}</td>
-                  <td className="p-3">{client.attention}</td>
-                  <td className="p-3 font-mono text-xs font-bold">{client.projectCode}</td>
+                  <td className="p-3">{branch?.branch ?? client.branch}</td>
+                  <td className="p-3">{branch?.commune ?? client.commune}</td>
+                  <td className="p-3">{branch?.attention ?? client.attention}</td>
+                  <td className="p-3 font-mono text-xs font-bold">{branch?.projectCode ?? client.projectCode}</td>
                 </tr>
               ))
             )}

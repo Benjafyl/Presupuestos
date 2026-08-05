@@ -24,9 +24,25 @@ model CompanySettings {
 }
 
 model Client {
-  id          Int      @id @default(autoincrement())
+  id          Int            @id @default(autoincrement())
   name        String
   rut         String?
+  branch      String?
+  commune     String?
+  attention   String?
+  city        String?
+  payment     String?
+  projectCode String?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  branches    ClientBranch[]
+  quotes      Quote[]
+}
+
+model ClientBranch {
+  id          Int      @id @default(autoincrement())
+  clientId    Int
+  client      Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
   branch      String?
   commune     String?
   attention   String?
@@ -36,34 +52,38 @@ model Client {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   quotes      Quote[]
+
+  @@index([clientId])
 }
 
 model Quote {
-  id            Int         @id @default(autoincrement())
-  quoteMode     String      @default("interchile")
-  code          String
-  revision      String?
-  currency      String      @default("CLP")
-  taxMode       String      @default("NET")
-  quoteDate     DateTime
-  projectCode   String?
-  clientId      Int?
-  client        Client?     @relation(fields: [clientId], references: [id], onDelete: SetNull)
-  clientName    String
-  clientRut     String?
-  branch        String?
-  commune       String?
-  attention     String?
-  city          String?
-  payment       String?
-  mainText      String
-  exclusions    String
-  warranty      String
-  executionTime String
-  signature     String
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
-  items         QuoteItem[]
+  id             Int           @id @default(autoincrement())
+  quoteMode      String        @default("interchile")
+  code           String
+  revision       String?
+  currency       String        @default("CLP")
+  taxMode        String        @default("NET")
+  quoteDate      DateTime
+  projectCode    String?
+  clientId       Int?
+  client         Client?       @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  clientBranchId Int?
+  clientBranch   ClientBranch? @relation(fields: [clientBranchId], references: [id], onDelete: SetNull)
+  clientName     String
+  clientRut      String?
+  branch         String?
+  commune        String?
+  attention      String?
+  city           String?
+  payment        String?
+  mainText       String
+  exclusions     String
+  warranty       String
+  executionTime  String
+  signature      String
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  items          QuoteItem[]
 }
 
 model QuoteItem {

@@ -17,7 +17,10 @@ export default async function EditQuotePage({ params }: EditQuotePageProps) {
   const [settings, template, clients, quote] = await Promise.all([
     ensureCompanySettings(),
     ensureTemplateText(),
-    getPrisma().client.findMany({ orderBy: { name: "asc" } }),
+    getPrisma().client.findMany({
+      orderBy: { name: "asc" },
+      include: { branches: { orderBy: [{ branch: "asc" }, { commune: "asc" }] } },
+    }),
     getPrisma().quote.findUnique({
       where: { id: quoteId },
       include: { items: { orderBy: { position: "asc" } } },
@@ -37,6 +40,7 @@ export default async function EditQuotePage({ params }: EditQuotePageProps) {
     quoteDate: toDateInput(quote.quoteDate),
     projectCode: quote.projectCode ?? "",
     clientId: quote.clientId,
+    clientBranchId: quote.clientBranchId,
     saveClient: false,
     clientName: quote.clientName,
     clientRut: quote.clientRut ?? "",

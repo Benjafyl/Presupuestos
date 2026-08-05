@@ -35,6 +35,17 @@ type ClientOption = {
   city: string | null;
   payment: string | null;
   projectCode: string | null;
+  branches: ClientBranchOption[];
+};
+
+type ClientBranchOption = {
+  id: number;
+  branch: string | null;
+  commune: string | null;
+  attention: string | null;
+  city: string | null;
+  payment: string | null;
+  projectCode: string | null;
 };
 
 type Settings = {
@@ -151,6 +162,7 @@ export function QuoteEditor({
       quoteDate: today,
       projectCode: defaultProjectCode,
       clientId: null,
+      clientBranchId: null,
       saveClient: true,
       clientName: "",
       clientRut: "",
@@ -175,6 +187,8 @@ export function QuoteEditor({
 
   const totals = useMemo(() => quoteTotals(form.items), [form.items]);
   const tableRows = useMemo(() => quoteTableRows(form.items.map((item, index) => ({ ...item, position: index + 1 }))), [form.items]);
+  const selectedClient = useMemo(() => clients.find((client) => client.id === form.clientId), [clients, form.clientId]);
+  const branchOptions = selectedClient?.branches ?? [];
 
   useEffect(() => {
     formRef.current = form;
@@ -192,6 +206,19 @@ export function QuoteEditor({
     setForm((current) => ({ ...current, [key]: value }));
   }
 
+  function updateBranchValue<K extends "branch" | "commune" | "attention" | "city" | "payment" | "projectCode">(
+    key: K,
+    value: QuotePayload[K],
+  ) {
+    markChanged();
+    setForm((current) => ({
+      ...current,
+      clientBranchId: null,
+      saveClient: current.clientId ? true : current.saveClient,
+      [key]: value,
+    }));
+  }
+
   function updateItem(index: number, key: "qty" | "description" | "unitValue", value: string) {
     markChanged();
     setForm((current) => ({
@@ -207,20 +234,43 @@ export function QuoteEditor({
   function selectClient(value: string) {
     const clientId = value ? Number(value) : null;
     const client = clients.find((item) => item.id === clientId);
+    const firstBranch = client?.branches[0];
 
     markChanged();
     setForm((current) => ({
       ...current,
       clientId,
+      clientBranchId: firstBranch?.id ?? null,
       clientName: client?.name ?? current.clientName,
       clientRut: client?.rut ?? "",
-      branch: client?.branch ?? "",
-      commune: client?.commune ?? "",
-      attention: client?.attention ?? "",
-      city: client?.city ?? "",
-      payment: client?.payment ?? current.payment,
-      projectCode: client?.projectCode ?? current.projectCode,
-      code: client?.projectCode ? buildQuoteCode(prefix, client.projectCode, current.quoteDate) : current.code,
+      branch: firstBranch?.branch ?? client?.branch ?? "",
+      commune: firstBranch?.commune ?? client?.commune ?? "",
+      attention: firstBranch?.attention ?? client?.attention ?? "",
+      city: firstBranch?.city ?? client?.city ?? "",
+      payment: firstBranch?.payment ?? client?.payment ?? current.payment,
+      projectCode: firstBranch?.projectCode ?? client?.projectCode ?? current.projectCode,
+      code:
+        firstBranch?.projectCode || client?.projectCode
+          ? buildQuoteCode(prefix, firstBranch?.projectCode ?? client?.projectCode ?? current.projectCode, current.quoteDate)
+          : current.code,
+    }));
+  }
+
+  function selectBranch(value: string) {
+    const clientBranchId = value ? Number(value) : null;
+    const branch = branchOptions.find((item) => item.id === clientBranchId);
+
+    markChanged();
+    setForm((current) => ({
+      ...current,
+      clientBranchId,
+      branch: branch?.branch ?? "",
+      commune: branch?.commune ?? "",
+      attention: branch?.attention ?? "",
+      city: branch?.city ?? "",
+      payment: branch?.payment ?? current.payment,
+      projectCode: branch?.projectCode ?? current.projectCode,
+      code: branch?.projectCode ? buildQuoteCode(prefix, branch.projectCode, current.quoteDate) : current.code,
     }));
   }
 
@@ -292,6 +342,7 @@ export function QuoteEditor({
         ...current,
         id: result.id,
         clientId: result.clientId ?? current.clientId,
+        clientBranchId: result.clientBranchId ?? current.clientBranchId,
       }));
 
       if (savedVersion === changeVersionRef.current) {
@@ -390,7 +441,7 @@ export function QuoteEditor({
           </label>
           <label className="space-y-1">
             <span className={labelClass}>Codigo proyecto</span>
-            <input className={fieldClass} value={form.projectCode} onChange={(event) => update("projectCode", event.target.value)} />
+            <input className={fieldClass} value={form.projectCode} onChange={(event) => updateBranchValue("projectCode", event.target.value)} />
           </label>
           <div className="flex items-end">
             <button className="button-secondary h-9" type="button" onClick={regenerateCode}>
@@ -440,6 +491,22 @@ export function QuoteEditor({
                 ))}
               </select>
             </label>
+            <label className="space-y-1">
+              <span className={labelClass}>{isFreelance ? "Proyecto guardado" : "Sucursal guardada"}</span>
+              <select
+                className={fieldClass}
+                disabled={!form.clientId || branchOptions.length === 0}
+                value={form.clientBranchId ?? ""}
+                onChange={(event) => selectBranch(event.target.value)}
+              >
+                <option value="">{form.clientId ? "Nueva sucursal / manual" : "Selecciona un cliente"}</option>
+                {branchOptions.map((branch) => (
+                  <option key={branch.id} value={branch.id}>
+                    {[branch.branch, branch.commune].filter(Boolean).join(" - ") || "Sucursal sin nombre"}
+                  </option>
+                ))}
+              </select>
+            </label>
             <label className="flex items-end gap-2 text-sm font-semibold text-neutral-800">
               <input checked={form.saveClient} className="size-4" type="checkbox" onChange={(event) => update("saveClient", event.target.checked)} />
               Guardar/actualizar cliente
@@ -457,23 +524,23 @@ export function QuoteEditor({
             </label>
             <label className="space-y-1">
               <span className={labelClass}>{isFreelance ? "Proyecto" : "Sucursal"}</span>
-              <input className={fieldClass} value={form.branch} onChange={(event) => update("branch", event.target.value)} />
+              <input className={fieldClass} value={form.branch} onChange={(event) => updateBranchValue("branch", event.target.value)} />
             </label>
             <label className="space-y-1">
               <span className={labelClass}>Comuna</span>
-              <input className={fieldClass} value={form.commune} onChange={(event) => update("commune", event.target.value)} />
+              <input className={fieldClass} value={form.commune} onChange={(event) => updateBranchValue("commune", event.target.value)} />
             </label>
             <label className="space-y-1">
               <span className={labelClass}>Atencion</span>
-              <input className={fieldClass} value={form.attention} onChange={(event) => update("attention", event.target.value)} />
+              <input className={fieldClass} value={form.attention} onChange={(event) => updateBranchValue("attention", event.target.value)} />
             </label>
             <label className="space-y-1">
               <span className={labelClass}>Ciudad</span>
-              <input className={fieldClass} value={form.city} onChange={(event) => update("city", event.target.value)} />
+              <input className={fieldClass} value={form.city} onChange={(event) => updateBranchValue("city", event.target.value)} />
             </label>
             <label className="space-y-1">
               <span className={labelClass}>{labels.payment}</span>
-              <input className={fieldClass} value={form.payment} onChange={(event) => update("payment", event.target.value)} />
+              <input className={fieldClass} value={form.payment} onChange={(event) => updateBranchValue("payment", event.target.value)} />
             </label>
           </div>
         </section>

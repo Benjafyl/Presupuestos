@@ -24,8 +24,9 @@ export async function GET() {
   const prisma = getPrisma();
 
   try {
-    const [clients, quotes, quoteItems, companySettings, templateTexts] = await Promise.all([
+    const [clients, clientBranches, quotes, quoteItems, companySettings, templateTexts] = await Promise.all([
       prisma.client.count(),
+      prisma.clientBranch.count(),
       prisma.quote.count(),
       prisma.quoteItem.count(),
       prisma.companySettings.count(),
@@ -37,6 +38,7 @@ export async function GET() {
       database: maskDatabaseUrl(process.env.DATABASE_URL),
       counts: {
         clients,
+        clientBranches,
         quotes,
         quoteItems,
         companySettings,

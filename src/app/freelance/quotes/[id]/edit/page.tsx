@@ -15,7 +15,10 @@ export default async function EditFreelanceQuotePage({ params }: EditFreelanceQu
   const quoteId = Number(id);
 
   const [clients, quote] = await Promise.all([
-    getPrisma().client.findMany({ orderBy: { name: "asc" } }),
+    getPrisma().client.findMany({
+      orderBy: { name: "asc" },
+      include: { branches: { orderBy: [{ branch: "asc" }, { commune: "asc" }] } },
+    }),
     getPrisma().quote.findUnique({
       where: { id: quoteId },
       include: { items: { orderBy: { position: "asc" } } },
@@ -35,6 +38,7 @@ export default async function EditFreelanceQuotePage({ params }: EditFreelanceQu
     quoteDate: toDateInput(quote.quoteDate),
     projectCode: quote.projectCode ?? "",
     clientId: quote.clientId,
+    clientBranchId: quote.clientBranchId,
     saveClient: false,
     clientName: quote.clientName,
     clientRut: quote.clientRut ?? "",

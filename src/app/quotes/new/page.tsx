@@ -10,7 +10,10 @@ export default async function NewQuotePage() {
   const [settings, template, clients] = await Promise.all([
     ensureCompanySettings(),
     ensureTemplateText(),
-    getPrisma().client.findMany({ orderBy: { name: "asc" } }),
+    getPrisma().client.findMany({
+      orderBy: { name: "asc" },
+      include: { branches: { orderBy: [{ branch: "asc" }, { commune: "asc" }] } },
+    }),
   ]);
 
   return (
