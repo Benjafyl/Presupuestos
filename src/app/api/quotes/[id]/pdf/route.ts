@@ -16,7 +16,7 @@ export async function GET(request: NextRequest, context: PdfRouteContext) {
   const quote = await getPrisma().quote.findUnique({ where: { id: Number(id) } });
 
   if (!quote) {
-    return new Response("Cotización no encontrada", { status: 404 });
+    return new Response("Presupuesto no encontrado", { status: 404 });
   }
 
   await ensureCompanySettings();
@@ -38,10 +38,9 @@ export async function GET(request: NextRequest, context: PdfRouteContext) {
       margin: { top: "0", right: "0", bottom: "0", left: "0" },
     });
 
-    const code = safeFilePart(quote.code);
-    const revision = quote.revision ? `_${safeFilePart(quote.revision)}` : "";
+    const code = safeFilePart(displayCode(quote.code, quote.revision));
     const client = safeFilePart(quote.clientName || "Cliente");
-    const filename = `Cotizacion_${code}${revision}_${client}.pdf`;
+    const filename = `Presupuesto_${code}_${client}.pdf`;
 
     return new Response(new Uint8Array(pdf), {
       headers: {
