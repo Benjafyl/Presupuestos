@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Copy, Eye, FileDown, Plus, Save, Trash2 } from "lucide-react";
+import { Copy, Eye, FileDown, ListPlus, Plus, Save, Trash2 } from "lucide-react";
 import { QuotePayload, saveQuote } from "@/app/actions";
 import {
   buildQuoteCode,
@@ -23,6 +23,7 @@ import {
   TaxMode,
   TAX_MODE_OPTIONS,
 } from "@/lib/quote-format";
+import type { QuoteTableRow } from "@/lib/quote-format";
 import { freelanceSettings } from "@/lib/freelance";
 
 type ClientOption = {
@@ -88,6 +89,12 @@ function blankSection() {
 
 function blankSubtotal() {
   return { rowType: "subtotal" as QuoteItemRowType, qty: 0, description: "SUBTOTAL", unitValue: 0 };
+}
+
+function insertAt<T>(items: T[], index: number, item: T) {
+  const next = [...items];
+  next.splice(Math.max(0, Math.min(index, next.length)), 0, item);
+  return next;
 }
 
 function isBlankDefaultItem(item: QuotePayload["items"][number]) {
@@ -231,6 +238,37 @@ export function QuoteEditor({
     }));
   }
 
+  function insertRow(index: number, item: QuotePayload["items"][number]) {
+    markChanged();
+    setForm((current) => {
+      if (current.items.length === 1 && isBlankDefaultItem(current.items[0])) {
+        return { ...current, items: [item] };
+      }
+
+      return { ...current, items: insertAt(current.items, index, item) };
+    });
+  }
+
+  function insertItemAfter(index: number) {
+    insertRow(index + 1, blankItem());
+  }
+
+  function insertSectionAfter(index: number) {
+    insertRow(index + 1, blankSection());
+  }
+
+  function insertSubtotalAfter(index: number) {
+    insertRow(index + 1, blankSubtotal());
+  }
+
+  function removeRow(index: number) {
+    markChanged();
+    setForm((current) => ({
+      ...current,
+      items: current.items.length > 1 ? current.items.filter((_, itemIndex) => itemIndex !== index) : [blankItem()],
+    }));
+  }
+
   function selectClient(value: string) {
     const clientId = value ? Number(value) : null;
     const client = clients.find((item) => item.id === clientId);
@@ -296,8 +334,7 @@ export function QuoteEditor({
   }
 
   function addItem() {
-    markChanged();
-    setForm((current) => ({ ...current, items: [...current.items, blankItem()] }));
+    insertRow(form.items.length, blankItem());
   }
 
   function addSection() {
@@ -312,19 +349,15 @@ export function QuoteEditor({
   }
 
   function addSectionAtStart() {
-    markChanged();
-    setForm((current) => {
-      if (current.items.length === 1 && isBlankDefaultItem(current.items[0])) {
-        return { ...current, items: [blankSection()] };
-      }
+    insertRow(0, blankSection());
+  }
 
-      return { ...current, items: [blankSection(), ...current.items] };
-    });
+  function addItemAtStart() {
+    insertRow(0, blankItem());
   }
 
   function addSubtotal() {
-    markChanged();
-    setForm((current) => ({ ...current, items: [...current.items, blankSubtotal()] }));
+    insertRow(form.items.length, blankSubtotal());
   }
 
   const persist = useCallback(async (manual = false) => {
@@ -387,6 +420,122 @@ export function QuoteEditor({
           : saveState === "saved"
             ? "Cambios guardados automaticamente"
             : "Autoguardado activo";
+  const insertButtonClass =
+    "inline-flex h-8 items-center justify-center gap-1 border border-neutral-300 px-2 text-xs font-semibold text-neutral-700 hover:bg-neutral-100";
+  const deleteButtonClass =
+    "inline-flex size-8 items-center justify-center border border-neutral-300 text-neutral-700 hover:bg-neutral-100";
+
+  function insertAction(label: string, title: string, onClick: () => void) {
+    return (
+      <button aria-label={title} className={insertButtonClass} title={title} type="button" onClick={onClick}>
+        <ListPlus size={14} /> {label}
+      </button>
+    );
+  }
+
+  function deleteAction(title: string, onClick: () => void) {
+    return (
+      <button aria-label={title} className={deleteButtonClass} title={title} type="button" onClick={onClick}>
+        <Trash2 size={15} />
+      </button>
+    );
+  }
+
+  function renderTableRow(row: QuoteTableRow, rowIndex: number) {
+    if (row.kind === "section") {
+      return (
+        <tr className="bg-neutral-100" key={`section-${row.sourceIndex}`}>
+          <td className="border border-neutral-300 p-2 text-xs font-bold uppercase text-neutral-600" colSpan={5}>
+            <input
+              className="h-8 w-full border border-neutral-200 bg-white px-2 font-bold uppercase"
+              value={form.items[row.sourceIndex]?.description ?? ""}
+              onChange={(event) => updateItem(row.sourceIndex, "description", event.target.value)}
+            />
+          </td>
+          <td className="border border-neutral-300 p-1 text-center">
+            <div className="flex justify-center gap-1">
+              {insertAction("Item", "Insertar item debajo", () => insertItemAfter(row.sourceIndex))}
+              {deleteAction("Eliminar titulo", () => removeRow(row.sourceIndex))}
+            </div>
+          </td>
+        </tr>
+      );
+    }
+
+    if (row.kind === "subtotal") {
+      const subtotalSourceIndex = row.sourceIndex;
+
+      return (
+        <tr className="bg-neutral-50" key={`subtotal-${rowIndex}`}>
+          <td className="border border-neutral-300 p-2 text-right text-xs font-bold uppercase" colSpan={4}>
+            {subtotalSourceIndex === null ? (
+              row.label
+            ) : (
+              <input
+                className="h-8 w-full border border-neutral-200 bg-white px-2 text-right font-bold uppercase"
+                value={form.items[subtotalSourceIndex]?.description ?? ""}
+                onChange={(event) => updateItem(subtotalSourceIndex, "description", event.target.value)}
+              />
+            )}
+          </td>
+          <td className="border border-neutral-300 p-2 text-right font-bold">{formatMoney(row.total)}</td>
+          <td className="border border-neutral-300 p-1 text-center">
+            {subtotalSourceIndex === null ? null : (
+              <div className="flex justify-center gap-1">
+                {insertAction("Titulo", "Insertar titulo debajo", () => insertSectionAfter(subtotalSourceIndex))}
+                {insertAction("Item", "Insertar item debajo", () => insertItemAfter(subtotalSourceIndex))}
+                {deleteAction("Eliminar subtotal", () => removeRow(subtotalSourceIndex))}
+              </div>
+            )}
+          </td>
+        </tr>
+      );
+    }
+
+    const item = row.item;
+
+    return (
+      <tr key={`item-${row.sourceIndex}`}>
+        <td className="border border-neutral-300 p-1 text-center font-semibold">{row.itemPosition}</td>
+        <td className="border border-neutral-300 p-1">
+          <input
+            className="h-8 w-full border border-neutral-200 px-2 text-right"
+            min="0"
+            step="0.01"
+            type="number"
+            value={item.qty}
+            onChange={(event) => updateItem(row.sourceIndex, "qty", event.target.value)}
+          />
+        </td>
+        <td className="border border-neutral-300 p-1">
+          <input
+            className="h-8 w-full border border-neutral-200 px-2"
+            value={item.description}
+            onChange={(event) => updateItem(row.sourceIndex, "description", event.target.value)}
+          />
+        </td>
+        <td className="border border-neutral-300 p-1">
+          <input
+            className="h-8 w-full border border-neutral-200 px-2 text-right"
+            min="0"
+            step="0.01"
+            type="number"
+            value={item.unitValue}
+            onChange={(event) => updateItem(row.sourceIndex, "unitValue", event.target.value)}
+          />
+        </td>
+        <td className="border border-neutral-300 p-2 text-right font-bold">{formatMoney(row.total)}</td>
+        <td className="border border-neutral-300 p-1 text-center">
+          <div className="flex justify-center gap-1">
+            {insertAction("Item", "Insertar item debajo", () => insertItemAfter(row.sourceIndex))}
+            {insertAction("Titulo", "Insertar titulo debajo", () => insertSectionAfter(row.sourceIndex))}
+            {insertAction("Subtotal", "Insertar subtotal debajo", () => insertSubtotalAfter(row.sourceIndex))}
+            {deleteAction("Eliminar item", () => removeRow(row.sourceIndex))}
+          </div>
+        </td>
+      </tr>
+    );
+  }
 
   return (
     <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_420px]">
@@ -552,7 +701,7 @@ export function QuoteEditor({
           </label>
 
           <div className="overflow-x-auto border border-neutral-300">
-            <table className="w-full min-w-[760px] border-collapse text-sm">
+            <table className="w-full min-w-[1080px] border-collapse text-sm">
               <thead className={`${previewRed} text-white`}>
                 <tr>
                   <th className="w-14 border border-neutral-700 p-2">Item</th>
@@ -560,114 +709,12 @@ export function QuoteEditor({
                   <th className="border border-neutral-700 p-2">SERVICIO / DESCRIPCION</th>
                   <th className="w-32 border border-neutral-700 p-2">Valor {form.currency}</th>
                   <th className="w-32 border border-neutral-700 p-2">Total {form.currency}</th>
-                  <th className="w-12 border border-neutral-700 p-2"></th>
+                  <th className="w-48 border border-neutral-700 p-2">Acciones</th>
                 </tr>
               </thead>
               <tbody>
-                {tableRows.map((row, rowIndex) => {
-                  if (row.kind === "section") {
-                    return (
-                      <tr className="bg-neutral-100" key={`section-${row.sourceIndex}`}>
-                        <td className="border border-neutral-300 p-2 text-xs font-bold uppercase text-neutral-600" colSpan={5}>
-                          <input
-                            className="h-8 w-full border border-neutral-200 bg-white px-2 font-bold uppercase"
-                            value={form.items[row.sourceIndex]?.description ?? ""}
-                            onChange={(event) => updateItem(row.sourceIndex, "description", event.target.value)}
-                          />
-                        </td>
-                        <td className="border border-neutral-300 p-1 text-center">
-                          <button
-                            aria-label="Eliminar titulo"
-                            className="inline-flex size-8 items-center justify-center border border-neutral-300 text-neutral-700 hover:bg-neutral-100"
-                            type="button"
-                            onClick={() => {
-                              markChanged();
-                              setForm((current) => ({
-                                ...current,
-                                items: current.items.length > 1 ? current.items.filter((_, itemIndex) => itemIndex !== row.sourceIndex) : [blankItem()],
-                              }));
-                            }}
-                          >
-                            <Trash2 size={15} />
-                          </button>
-                        </td>
-                      </tr>
-                    );
-                  }
-
-                  if (row.kind === "subtotal") {
-                    const subtotalSourceIndex = row.sourceIndex;
-
-                    return (
-                      <tr className="bg-neutral-50" key={`subtotal-${rowIndex}`}>
-                        <td className="border border-neutral-300 p-2 text-right text-xs font-bold uppercase" colSpan={4}>
-                          {subtotalSourceIndex === null ? (
-                            row.label
-                          ) : (
-                            <input
-                              className="h-8 w-full border border-neutral-200 bg-white px-2 text-right font-bold uppercase"
-                              value={form.items[subtotalSourceIndex]?.description ?? ""}
-                              onChange={(event) => updateItem(subtotalSourceIndex, "description", event.target.value)}
-                            />
-                          )}
-                        </td>
-                        <td className="border border-neutral-300 p-2 text-right font-bold">{formatMoney(row.total)}</td>
-                        <td className="border border-neutral-300 p-1 text-center">
-                          {subtotalSourceIndex === null ? null : (
-                            <button
-                              aria-label="Eliminar subtotal"
-                              className="inline-flex size-8 items-center justify-center border border-neutral-300 text-neutral-700 hover:bg-neutral-100"
-                              type="button"
-                              onClick={() => {
-                                markChanged();
-                                setForm((current) => ({
-                                  ...current,
-                                  items: current.items.length > 1 ? current.items.filter((_, itemIndex) => itemIndex !== subtotalSourceIndex) : [blankItem()],
-                                }));
-                              }}
-                            >
-                              <Trash2 size={15} />
-                            </button>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  }
-
-                  const item = row.item;
-
-                  return (
-                    <tr key={`item-${row.sourceIndex}`}>
-                      <td className="border border-neutral-300 p-1 text-center font-semibold">{row.itemPosition}</td>
-                      <td className="border border-neutral-300 p-1">
-                        <input className="h-8 w-full border border-neutral-200 px-2 text-right" min="0" step="0.01" type="number" value={item.qty} onChange={(event) => updateItem(row.sourceIndex, "qty", event.target.value)} />
-                      </td>
-                      <td className="border border-neutral-300 p-1">
-                        <input className="h-8 w-full border border-neutral-200 px-2" value={item.description} onChange={(event) => updateItem(row.sourceIndex, "description", event.target.value)} />
-                      </td>
-                      <td className="border border-neutral-300 p-1">
-                        <input className="h-8 w-full border border-neutral-200 px-2 text-right" min="0" step="0.01" type="number" value={item.unitValue} onChange={(event) => updateItem(row.sourceIndex, "unitValue", event.target.value)} />
-                      </td>
-                      <td className="border border-neutral-300 p-2 text-right font-bold">{formatMoney(row.total)}</td>
-                      <td className="border border-neutral-300 p-1 text-center">
-                        <button
-                          aria-label="Eliminar item"
-                          className="inline-flex size-8 items-center justify-center border border-neutral-300 text-neutral-700 hover:bg-neutral-100"
-                          type="button"
-                          onClick={() => {
-                            markChanged();
-                            setForm((current) => ({
-                              ...current,
-                              items: current.items.length > 1 ? current.items.filter((_, itemIndex) => itemIndex !== row.sourceIndex) : [blankItem()],
-                            }));
-                          }}
-                        >
-                          <Trash2 size={15} />
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
+                {/* eslint-disable-next-line react-hooks/refs -- action handlers read autosave refs only after user interaction. */}
+                {tableRows.map(renderTableRow)}
               </tbody>
             </table>
           </div>
@@ -679,6 +726,13 @@ export function QuoteEditor({
               onClick={addItem}
             >
               <Plus size={16} /> Agregar item
+            </button>
+            <button
+              className="button-secondary"
+              type="button"
+              onClick={addItemAtStart}
+            >
+              <Plus size={16} /> Agregar item arriba
             </button>
             <button
               className="button-secondary"
