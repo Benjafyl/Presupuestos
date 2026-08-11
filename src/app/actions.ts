@@ -302,6 +302,15 @@ export async function duplicateQuote(id: number) {
   redirect(quote.quoteMode === "freelance" ? `/freelance/quotes/${copy.id}/edit` : `/quotes/${copy.id}/edit`);
 }
 
+export async function deleteQuote(id: number) {
+  const prisma = getPrisma();
+  await prisma.quote.delete({ where: { id } });
+
+  revalidatePath("/");
+  revalidatePath("/interchile");
+  revalidatePath("/freelance");
+}
+
 export async function createClient(formData: FormData) {
   const prisma = getPrisma();
   const clientData = {
@@ -338,6 +347,15 @@ export async function createClient(formData: FormData) {
 
   revalidatePath("/clients");
   revalidatePath("/quotes/new");
+}
+
+export async function deleteClient(id: number) {
+  const prisma = getPrisma();
+  await prisma.client.delete({ where: { id } });
+
+  revalidatePath("/clients");
+  revalidatePath("/quotes/new");
+  revalidatePath("/freelance/quotes/new");
 }
 
 export async function saveSettings(formData: FormData) {
