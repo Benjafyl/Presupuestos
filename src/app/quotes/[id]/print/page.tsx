@@ -12,8 +12,8 @@ export default async function PrintQuotePage({ params }: PrintQuotePageProps) {
   const { id } = await params;
   const [settings, quote] = await Promise.all([
     ensureCompanySettings(),
-    getPrisma().quote.findUnique({
-      where: { id: Number(id) },
+    getPrisma().quote.findFirst({
+      where: { id: Number(id), deletedAt: null },
       include: { items: { orderBy: { position: "asc" } } },
     }),
   ]);

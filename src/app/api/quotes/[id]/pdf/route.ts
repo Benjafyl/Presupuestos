@@ -13,7 +13,7 @@ type PdfRouteContext = {
 
 export async function GET(request: NextRequest, context: PdfRouteContext) {
   const { id } = await context.params;
-  const quote = await getPrisma().quote.findUnique({ where: { id: Number(id) } });
+  const quote = await getPrisma().quote.findFirst({ where: { id: Number(id), deletedAt: null } });
 
   if (!quote) {
     return new Response("Presupuesto no encontrado", { status: 404 });

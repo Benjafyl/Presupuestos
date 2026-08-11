@@ -21,8 +21,8 @@ export default async function EditQuotePage({ params }: EditQuotePageProps) {
       orderBy: { name: "asc" },
       include: { branches: { orderBy: [{ branch: "asc" }, { commune: "asc" }] } },
     }),
-    getPrisma().quote.findUnique({
-      where: { id: quoteId },
+    getPrisma().quote.findFirst({
+      where: { id: quoteId, deletedAt: null },
       include: { items: { orderBy: { position: "asc" } } },
     }),
   ]);

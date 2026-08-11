@@ -1,60 +1,56 @@
 import Link from "next/link";
-import { Copy, FileDown, Pencil, Plus, Trash2 } from "lucide-react";
-import { deleteQuote, deleteSelectedQuotes, duplicateQuote } from "@/app/actions";
+import { ArrowLeft, RotateCcw } from "lucide-react";
+import {
+  permanentlyDeleteQuote,
+  permanentlyDeleteSelectedQuotes,
+  restoreQuote,
+  restoreSelectedQuotes,
+} from "@/app/actions";
 import { ConfirmSubmitButton } from "@/components/ConfirmSubmitButton";
 import { getPrisma } from "@/lib/prisma";
 import { displayCode, formatMoney, quoteTotals, QuoteMode, toDisplayDate } from "@/lib/quote-format";
-import { purgeExpiredDeletedQuotes } from "@/lib/quote-trash";
+import { daysUntilDelete, purgeExpiredDeletedQuotes } from "@/lib/quote-trash";
 
-type QuoteListProps = {
+type QuoteTrashListProps = {
   mode: QuoteMode;
-  eyebrow: string;
-  title: string;
-  newHref: string;
-  editHref: (id: number) => string;
+  backHref: string;
   accentClass?: string;
 };
 
-export async function QuoteList({
-  mode,
-  eyebrow,
-  title,
-  newHref,
-  editHref,
-  accentClass = "text-red-800",
-}: QuoteListProps) {
+export async function QuoteTrashList({ mode, backHref, accentClass = "text-red-800" }: QuoteTrashListProps) {
   await purgeExpiredDeletedQuotes();
 
   const quotes = await getPrisma().quote.findMany({
-    where: { quoteMode: mode, deletedAt: null },
+    where: { quoteMode: mode, deletedAt: { not: null } },
     include: { items: { orderBy: { position: "asc" } } },
-    orderBy: { updatedAt: "desc" },
+    orderBy: { deletedAt: "desc" },
   });
-  const trashHref = mode === "freelance" ? "/freelance/trash" : "/interchile/trash";
 
   return (
     <>
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <p className={`text-xs font-bold uppercase ${accentClass}`}>{eyebrow}</p>
-          <h1 className="text-2xl font-bold">{title}</h1>
+          <p className={`text-xs font-bold uppercase ${accentClass}`}>Papelera de presupuestos</p>
+          <h1 className="text-2xl font-bold">Presupuestos eliminados</h1>
+          <p className="mt-1 text-sm text-neutral-600">
+            Puedes restaurarlos durante 5 dias. Despues se eliminan permanentemente.
+          </p>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <Link className="button-secondary" href={trashHref}>
-            <Trash2 size={16} /> Papelera
-          </Link>
-          <Link className="button-primary" href={newHref}>
-            <Plus size={16} /> Nueva cotizacion
-          </Link>
-        </div>
+        <Link className="button-secondary" href={backHref}>
+          <ArrowLeft size={16} /> Volver
+        </Link>
       </div>
 
-      <form action={deleteSelectedQuotes} className="space-y-3">
-        <div className="flex justify-end">
+      <form action={restoreSelectedQuotes} className="space-y-3">
+        <div className="flex flex-wrap justify-end gap-2">
+          <button className="button-secondary" type="submit">
+            <RotateCcw size={16} /> Restaurar seleccionados
+          </button>
           <ConfirmSubmitButton
-            label="Eliminar seleccionados"
-            message="Eliminar los presupuestos seleccionados? Se moveran a la papelera por 5 dias."
-            title="Eliminar presupuestos seleccionados"
+            formAction={permanentlyDeleteSelectedQuotes}
+            label="Eliminar definitivo"
+            message="Eliminar definitivamente los presupuestos seleccionados? Esta accion no se puede deshacer."
+            title="Eliminar definitivamente seleccionados"
           />
         </div>
 
@@ -66,16 +62,17 @@ export async function QuoteList({
                 <th className="border-b border-neutral-300 p-3">Codigo</th>
                 <th className="border-b border-neutral-300 p-3">Cliente</th>
                 <th className="border-b border-neutral-300 p-3">Fecha</th>
-                <th className="border-b border-neutral-300 p-3">Moneda</th>
                 <th className="border-b border-neutral-300 p-3 text-right">Valor total neto</th>
+                <th className="border-b border-neutral-300 p-3">Eliminado</th>
+                <th className="border-b border-neutral-300 p-3">Dias restantes</th>
                 <th className="border-b border-neutral-300 p-3 text-right">Acciones</th>
               </tr>
             </thead>
             <tbody>
               {quotes.length === 0 ? (
                 <tr>
-                  <td className="p-8 text-center text-neutral-500" colSpan={7}>
-                    No hay cotizaciones guardadas todavia.
+                  <td className="p-8 text-center text-neutral-500" colSpan={8}>
+                    No hay presupuestos en papelera.
                   </td>
                 </tr>
               ) : (
@@ -89,23 +86,19 @@ export async function QuoteList({
                       <td className="p-3 font-mono text-xs font-bold">{displayCode(quote.code, quote.revision)}</td>
                       <td className="p-3 font-semibold">{quote.clientName}</td>
                       <td className="p-3">{toDisplayDate(quote.quoteDate)}</td>
-                      <td className="p-3">{quote.currency}</td>
                       <td className="p-3 text-right font-bold">{formatMoney(total)}</td>
+                      <td className="p-3">{quote.deletedAt ? toDisplayDate(quote.deletedAt) : "-"}</td>
+                      <td className="p-3">{daysUntilDelete(quote.deleteExpiresAt)} dias</td>
                       <td className="p-3">
                         <div className="flex justify-end gap-2">
-                          <Link className="button-secondary" href={editHref(quote.id)} title="Editar">
-                            <Pencil size={16} /> Editar
-                          </Link>
-                          <button className="button-secondary" formAction={duplicateQuote.bind(null, quote.id)} type="submit" title="Duplicar">
-                            <Copy size={16} /> Duplicar
+                          <button className="button-secondary" formAction={restoreQuote.bind(null, quote.id)} type="submit">
+                            <RotateCcw size={16} /> Restaurar
                           </button>
-                          <Link className="button-secondary" href={`/api/quotes/${quote.id}/pdf`} title="Exportar PDF">
-                            <FileDown size={16} /> PDF
-                          </Link>
                           <ConfirmSubmitButton
-                            formAction={deleteQuote.bind(null, quote.id)}
-                            message={`Eliminar el presupuesto ${displayCode(quote.code, quote.revision)}? Se movera a la papelera por 5 dias.`}
-                            title="Eliminar presupuesto"
+                            formAction={permanentlyDeleteQuote.bind(null, quote.id)}
+                            label="Definitivo"
+                            message={`Eliminar definitivamente el presupuesto ${displayCode(quote.code, quote.revision)}? Esta accion no se puede deshacer.`}
+                            title="Eliminar definitivo"
                           />
                         </div>
                       </td>

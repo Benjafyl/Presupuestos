@@ -15,6 +15,7 @@ import {
   toDateInput,
 } from "@/lib/quote-format";
 import { freelanceSettings } from "@/lib/freelance";
+import { purgeExpiredDeletedQuotes, quoteTrashExpiresAt } from "@/lib/quote-trash";
 
 export type QuoteItemPayload = {
   id?: number;
@@ -120,6 +121,21 @@ function hasBranchData(data: {
   projectCode: string | null;
 }) {
   return Boolean(data.branch || data.commune || data.attention || data.city || data.payment || data.projectCode);
+}
+
+function quoteIdsFromFormData(formData: FormData) {
+  return formData
+    .getAll("quoteIds")
+    .map((value) => Number(value))
+    .filter((value) => Number.isInteger(value) && value > 0);
+}
+
+function revalidateQuoteLists() {
+  revalidatePath("/");
+  revalidatePath("/interchile");
+  revalidatePath("/interchile/trash");
+  revalidatePath("/freelance");
+  revalidatePath("/freelance/trash");
 }
 
 export async function saveQuote(payload: QuotePayload) {
@@ -254,8 +270,9 @@ export async function saveQuote(payload: QuotePayload) {
 
 export async function duplicateQuote(id: number) {
   const prisma = getPrisma();
-  const quote = await prisma.quote.findUnique({
-    where: { id },
+  await purgeExpiredDeletedQuotes();
+  const quote = await prisma.quote.findFirst({
+    where: { id, deletedAt: null },
     include: { items: { orderBy: { position: "asc" } } },
   });
 
@@ -296,19 +313,89 @@ export async function duplicateQuote(id: number) {
     },
   });
 
-  revalidatePath("/");
-  revalidatePath("/interchile");
-  revalidatePath("/freelance");
+  revalidateQuoteLists();
   redirect(quote.quoteMode === "freelance" ? `/freelance/quotes/${copy.id}/edit` : `/quotes/${copy.id}/edit`);
 }
 
 export async function deleteQuote(id: number) {
   const prisma = getPrisma();
-  await prisma.quote.delete({ where: { id } });
+  await purgeExpiredDeletedQuotes();
+  const deletedAt = new Date();
+  await prisma.quote.update({
+    where: { id },
+    data: {
+      deletedAt,
+      deleteExpiresAt: quoteTrashExpiresAt(deletedAt),
+    },
+  });
 
-  revalidatePath("/");
-  revalidatePath("/interchile");
-  revalidatePath("/freelance");
+  revalidateQuoteLists();
+}
+
+export async function deleteSelectedQuotes(formData: FormData) {
+  const ids = quoteIdsFromFormData(formData);
+  if (ids.length === 0) return;
+
+  const prisma = getPrisma();
+  await purgeExpiredDeletedQuotes();
+  const deletedAt = new Date();
+  await prisma.quote.updateMany({
+    where: { id: { in: ids }, deletedAt: null },
+    data: {
+      deletedAt,
+      deleteExpiresAt: quoteTrashExpiresAt(deletedAt),
+    },
+  });
+
+  revalidateQuoteLists();
+}
+
+export async function restoreQuote(id: number) {
+  const prisma = getPrisma();
+  await purgeExpiredDeletedQuotes();
+  await prisma.quote.update({
+    where: { id },
+    data: {
+      deletedAt: null,
+      deleteExpiresAt: null,
+    },
+  });
+
+  revalidateQuoteLists();
+}
+
+export async function restoreSelectedQuotes(formData: FormData) {
+  const ids = quoteIdsFromFormData(formData);
+  if (ids.length === 0) return;
+
+  const prisma = getPrisma();
+  await purgeExpiredDeletedQuotes();
+  await prisma.quote.updateMany({
+    where: { id: { in: ids }, deletedAt: { not: null } },
+    data: {
+      deletedAt: null,
+      deleteExpiresAt: null,
+    },
+  });
+
+  revalidateQuoteLists();
+}
+
+export async function permanentlyDeleteQuote(id: number) {
+  const prisma = getPrisma();
+  await prisma.quote.deleteMany({ where: { id, deletedAt: { not: null } } });
+
+  revalidateQuoteLists();
+}
+
+export async function permanentlyDeleteSelectedQuotes(formData: FormData) {
+  const ids = quoteIdsFromFormData(formData);
+  if (ids.length === 0) return;
+
+  const prisma = getPrisma();
+  await prisma.quote.deleteMany({ where: { id: { in: ids }, deletedAt: { not: null } } });
+
+  revalidateQuoteLists();
 }
 
 export async function createClient(formData: FormData) {
