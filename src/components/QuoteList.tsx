@@ -128,7 +128,7 @@ export async function QuoteList({
   const quotes = await prisma.quote.findMany({
     where,
     include: { items: { orderBy: { position: "asc" } } },
-    orderBy: { updatedAt: "desc" },
+    orderBy: [{ clientName: "asc" }, { branch: "asc" }, { quoteDate: "desc" }, { updatedAt: "desc" }],
     skip: (currentPage - 1) * PAGE_SIZE,
     take: PAGE_SIZE,
   });
@@ -154,6 +154,57 @@ export async function QuoteList({
     const queryString = params.toString();
     return queryString ? `?${queryString}` : "?";
   }
+
+  const groupedQuotes = Array.from(
+    quotes
+      .reduce(
+        (groups, quote) => {
+          const clientName = quote.clientName.trim() || "Cliente sin nombre";
+          const clientKey = normalizeForKey(clientName) || `CLIENT-${quote.id}`;
+          const branchName = quote.branch?.trim() || "Sin sucursal";
+          const branchKey = normalizeForKey(branchName) || `BRANCH-${quote.id}`;
+          const group =
+            groups.get(clientKey) ??
+            ({
+              key: clientKey,
+              name: clientName,
+              branches: new Map<string, { key: string; name: string; quotes: typeof quotes }>(),
+            } satisfies {
+              key: string;
+              name: string;
+              branches: Map<string, { key: string; name: string; quotes: typeof quotes }>;
+            });
+          const branch =
+            group.branches.get(branchKey) ??
+            ({
+              key: branchKey,
+              name: branchName,
+              quotes: [],
+            } satisfies { key: string; name: string; quotes: typeof quotes });
+
+          branch.quotes.push(quote);
+          group.branches.set(branchKey, branch);
+          groups.set(clientKey, group);
+          return groups;
+        },
+        new Map<
+          string,
+          {
+            key: string;
+            name: string;
+            branches: Map<string, { key: string; name: string; quotes: typeof quotes }>;
+          }
+        >(),
+      )
+      .values(),
+  )
+    .map((group) => ({
+      ...group,
+      branches: Array.from(group.branches.values()).sort((a, b) =>
+        a.name.localeCompare(b.name, "es", { sensitivity: "base" }),
+      ),
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name, "es", { sensitivity: "base" }));
 
   return (
     <>
@@ -231,65 +282,103 @@ export async function QuoteList({
           />
         </div>
 
-        <div className="overflow-x-auto border border-neutral-300 bg-white">
-          <table className="w-full min-w-[1120px] border-collapse text-sm">
-            <thead className="bg-neutral-100 text-left text-xs uppercase text-neutral-700">
-              <tr>
-                <th className="w-12 border-b border-neutral-300 p-3">Sel.</th>
-                <th className="border-b border-neutral-300 p-3">Codigo</th>
-                <th className="border-b border-neutral-300 p-3">Cliente</th>
-                <th className="border-b border-neutral-300 p-3">Sucursal</th>
-                <th className="border-b border-neutral-300 p-3">Fecha</th>
-                <th className="border-b border-neutral-300 p-3">Moneda</th>
-                <th className="border-b border-neutral-300 p-3 text-right">Valor total neto</th>
-                <th className="border-b border-neutral-300 p-3 text-right">Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {quotes.length === 0 ? (
-                <tr>
-                  <td className="p-8 text-center text-neutral-500" colSpan={8}>
-                    No hay cotizaciones para los filtros seleccionados.
-                  </td>
-                </tr>
-              ) : (
-                quotes.map((quote) => {
-                  const total = quoteTotals(quote.items).net;
-                  return (
-                    <tr key={quote.id} className="border-b border-neutral-200 last:border-b-0">
-                      <td className="p-3">
-                        <input className="size-4" name="quoteIds" type="checkbox" value={quote.id} />
-                      </td>
-                      <td className="p-3 font-mono text-xs font-bold">{displayCode(quote.code, quote.revision)}</td>
-                      <td className="p-3 font-semibold">{quote.clientName}</td>
-                      <td className="p-3">{quote.branch || "-"}</td>
-                      <td className="p-3">{toDisplayDate(quote.quoteDate)}</td>
-                      <td className="p-3">{quote.currency}</td>
-                      <td className="p-3 text-right font-bold">{formatMoney(total)}</td>
-                      <td className="p-3">
-                        <div className="flex justify-end gap-2">
-                          <Link className="button-secondary" href={editHref(quote.id)} title="Editar">
-                            <Pencil size={16} /> Editar
-                          </Link>
-                          <button className="button-secondary" formAction={duplicateQuote.bind(null, quote.id)} type="submit" title="Duplicar">
-                            <Copy size={16} /> Duplicar
-                          </button>
-                          <Link className="button-secondary" href={`/api/quotes/${quote.id}/pdf`} title="Exportar PDF">
-                            <FileDown size={16} /> PDF
-                          </Link>
-                          <ConfirmSubmitButton
-                            formAction={deleteQuote.bind(null, quote.id)}
-                            message={`Eliminar el presupuesto ${displayCode(quote.code, quote.revision)}? Se movera a la papelera por 5 dias.`}
-                            title="Eliminar presupuesto"
-                          />
+        <div className="space-y-3">
+          {groupedQuotes.length === 0 ? (
+            <div className="border border-neutral-300 bg-white p-8 text-center text-neutral-500">
+              No hay cotizaciones para los filtros seleccionados.
+            </div>
+          ) : (
+            groupedQuotes.map((clientGroup) => {
+              const quoteCount = clientGroup.branches.reduce((count, branch) => count + branch.quotes.length, 0);
+              return (
+                <details key={clientGroup.key} className="border border-neutral-300 bg-white">
+                  <summary className="grid cursor-pointer list-none gap-3 p-4 text-sm md:grid-cols-[2fr_1fr_1fr]">
+                    <div>
+                      <p className="text-[11px] font-bold uppercase text-neutral-500">Cliente</p>
+                      <p className="font-bold">{clientGroup.name}</p>
+                    </div>
+                    <div>
+                      <p className="text-[11px] font-bold uppercase text-neutral-500">Sucursales</p>
+                      <p className="font-semibold">{clientGroup.branches.length}</p>
+                    </div>
+                    <div>
+                      <p className="text-[11px] font-bold uppercase text-neutral-500">Presupuestos</p>
+                      <p className="font-semibold">{quoteCount}</p>
+                    </div>
+                  </summary>
+                  <div className="space-y-3 border-t border-neutral-200 p-4">
+                    {clientGroup.branches.map((branchGroup) => (
+                      <details key={branchGroup.key} className="border border-neutral-200 bg-white">
+                        <summary className="grid cursor-pointer list-none gap-3 bg-neutral-50 p-3 text-sm md:grid-cols-[2fr_1fr]">
+                          <div>
+                            <p className="text-[11px] font-bold uppercase text-neutral-500">Sucursal</p>
+                            <p className="font-semibold">{branchGroup.name}</p>
+                          </div>
+                          <div>
+                            <p className="text-[11px] font-bold uppercase text-neutral-500">Presupuestos</p>
+                            <p className="font-semibold">{branchGroup.quotes.length}</p>
+                          </div>
+                        </summary>
+                        <div className="overflow-x-auto">
+                          <table className="w-full min-w-[980px] border-collapse text-sm">
+                            <thead className="bg-neutral-100 text-left text-xs uppercase text-neutral-700">
+                              <tr>
+                                <th className="w-12 border-b border-neutral-300 p-3">Sel.</th>
+                                <th className="border-b border-neutral-300 p-3">Codigo</th>
+                                <th className="border-b border-neutral-300 p-3">Fecha</th>
+                                <th className="border-b border-neutral-300 p-3">Moneda</th>
+                                <th className="border-b border-neutral-300 p-3 text-right">Valor total neto</th>
+                                <th className="border-b border-neutral-300 p-3 text-right">Acciones</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {branchGroup.quotes.map((quote) => {
+                                const total = quoteTotals(quote.items).net;
+                                return (
+                                  <tr key={quote.id} className="border-b border-neutral-200 last:border-b-0">
+                                    <td className="p-3">
+                                      <input className="size-4" name="quoteIds" type="checkbox" value={quote.id} />
+                                    </td>
+                                    <td className="p-3 font-mono text-xs font-bold">{displayCode(quote.code, quote.revision)}</td>
+                                    <td className="p-3">{toDisplayDate(quote.quoteDate)}</td>
+                                    <td className="p-3">{quote.currency}</td>
+                                    <td className="p-3 text-right font-bold">{formatMoney(total)}</td>
+                                    <td className="p-3">
+                                      <div className="flex justify-end gap-2">
+                                        <Link className="button-secondary" href={editHref(quote.id)} title="Editar">
+                                          <Pencil size={16} /> Editar
+                                        </Link>
+                                        <button
+                                          className="button-secondary"
+                                          formAction={duplicateQuote.bind(null, quote.id)}
+                                          type="submit"
+                                          title="Duplicar"
+                                        >
+                                          <Copy size={16} /> Duplicar
+                                        </button>
+                                        <Link className="button-secondary" href={`/api/quotes/${quote.id}/pdf`} title="Exportar PDF">
+                                          <FileDown size={16} /> PDF
+                                        </Link>
+                                        <ConfirmSubmitButton
+                                          formAction={deleteQuote.bind(null, quote.id)}
+                                          message={`Eliminar el presupuesto ${displayCode(quote.code, quote.revision)}? Se movera a la papelera por 5 dias.`}
+                                          title="Eliminar presupuesto"
+                                        />
+                                      </div>
+                                    </td>
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                          </table>
                         </div>
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
+                      </details>
+                    ))}
+                  </div>
+                </details>
+              );
+            })
+          )}
         </div>
 
         <div className="flex flex-wrap items-center justify-between gap-3 text-sm">

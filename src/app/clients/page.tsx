@@ -13,14 +13,12 @@ type ClientsPageProps = {
 
 type ClientBranchRow = {
   key: string;
-  clientId: number;
-  branchId: number | null;
   branch: string | null;
   commune: string | null;
   attention: string | null;
   city: string | null;
   payment: string | null;
-  projectCode: string | null;
+  projectCodes: string[];
 };
 
 type ClientGroup = {
@@ -55,6 +53,39 @@ function textIncludes(value: string | null | undefined, query: string) {
   return normalizeForKey(value).includes(normalizeForKey(query));
 }
 
+function branchGroupKey(branch: {
+  branch: string | null;
+  commune: string | null;
+  attention: string | null;
+  city: string | null;
+  payment: string | null;
+}) {
+  return [branch.branch, branch.commune, branch.attention, branch.city, branch.payment].map(normalizeForKey).join("|");
+}
+
+function dedupeBranches(branches: ClientBranchRow[]) {
+  const grouped = new Map<string, ClientBranchRow>();
+
+  for (const branch of branches) {
+    const key = branchGroupKey(branch) || branch.key;
+    const existing = grouped.get(key);
+
+    if (!existing) {
+      grouped.set(key, { ...branch, key, projectCodes: [...branch.projectCodes] });
+      continue;
+    }
+
+    for (const projectCode of branch.projectCodes) {
+      if (projectCode && !existing.projectCodes.includes(projectCode)) existing.projectCodes.push(projectCode);
+    }
+  }
+
+  return Array.from(grouped.values()).map((branch) => ({
+    ...branch,
+    projectCodes: branch.projectCodes.sort((a, b) => a.localeCompare(b, "es", { sensitivity: "base" })),
+  }));
+}
+
 export default async function ClientsPage({ searchParams }: ClientsPageProps) {
   const params = await searchParams;
   const query = firstParam(params.q).trim();
@@ -86,26 +117,22 @@ export default async function ClientsPage({ searchParams }: ClientsPageProps) {
       client.branches.length > 0
         ? client.branches.map((branch) => ({
             key: `${client.id}-${branch.id}`,
-            clientId: client.id,
-            branchId: branch.id,
             branch: branch.branch,
             commune: branch.commune,
             attention: branch.attention,
             city: branch.city,
             payment: branch.payment,
-            projectCode: branch.projectCode,
+            projectCodes: branch.projectCode ? [branch.projectCode] : [],
           }))
         : [
             {
               key: `${client.id}-legacy`,
-              clientId: client.id,
-              branchId: null,
               branch: client.branch,
               commune: client.commune,
               attention: client.attention,
               city: client.city,
               payment: client.payment,
-              projectCode: client.projectCode,
+              projectCodes: client.projectCode ? [client.projectCode] : [],
             },
           ];
 
@@ -116,20 +143,20 @@ export default async function ClientsPage({ searchParams }: ClientsPageProps) {
   const groups = Array.from(groupsByName.values())
     .map((group) => ({
       ...group,
-      branches: group.branches.sort((a, b) =>
-        `${a.branch ?? ""} ${a.commune ?? ""} ${a.projectCode ?? ""}`.localeCompare(
-          `${b.branch ?? ""} ${b.commune ?? ""} ${b.projectCode ?? ""}`,
+      branches: dedupeBranches(group.branches).sort((a, b) =>
+        `${a.branch ?? ""} ${a.commune ?? ""}`.localeCompare(
+          `${b.branch ?? ""} ${b.commune ?? ""}`,
           "es",
           { sensitivity: "base" },
         ),
       ),
     }))
-    .sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
+    .sort((a, b) => a.name.localeCompare(b.name, "es", { sensitivity: "base" }));
 
   const filteredGroups = query
     ? groups.filter((group) => {
         const branchText = group.branches
-          .map((branch) => [branch.branch, branch.commune, branch.attention, branch.city, branch.payment, branch.projectCode].join(" "))
+          .map((branch) => [branch.branch, branch.commune, branch.attention, branch.city, branch.payment, ...branch.projectCodes].join(" "))
           .join(" ");
         return (
           textIncludes(group.name, query) ||
@@ -260,7 +287,7 @@ export default async function ClientsPage({ searchParams }: ClientsPageProps) {
                           <th className="border-b border-neutral-300 p-3">Atencion</th>
                           <th className="border-b border-neutral-300 p-3">Ciudad</th>
                           <th className="border-b border-neutral-300 p-3">Pago</th>
-                          <th className="border-b border-neutral-300 p-3">Codigo proyecto</th>
+                          <th className="border-b border-neutral-300 p-3">Codigos proyecto</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -271,7 +298,9 @@ export default async function ClientsPage({ searchParams }: ClientsPageProps) {
                             <td className="p-3">{branch.attention || "-"}</td>
                             <td className="p-3">{branch.city || "-"}</td>
                             <td className="p-3">{branch.payment || "-"}</td>
-                            <td className="p-3 font-mono text-xs font-bold">{branch.projectCode || "-"}</td>
+                            <td className="p-3 font-mono text-xs font-bold">
+                              {branch.projectCodes.length > 0 ? branch.projectCodes.join(", ") : "-"}
+                            </td>
                           </tr>
                         ))}
                       </tbody>
