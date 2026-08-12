@@ -13,6 +13,7 @@ import {
   Revision,
   TaxMode,
   toDateInput,
+  uppercaseBusinessText,
 } from "@/lib/quote-format";
 import { freelanceSettings } from "@/lib/freelance";
 import { purgeExpiredDeletedQuotes, quoteTrashExpiresAt } from "@/lib/quote-trash";
@@ -68,6 +69,8 @@ function parseQuoteDate(input: string) {
 
 function cleanQuotePayload(payload: QuotePayload, prefix: string) {
   const code = payload.code.trim() || buildQuoteCode(prefix, payload.projectCode, payload.quoteDate);
+  const clientName = uppercaseBusinessText(payload.clientName) || "CLIENTE SIN NOMBRE";
+  const branch = payload.quoteMode === "interchile" ? uppercaseBusinessText(payload.branch) : payload.branch.trim();
   const items = payload.items
     .map((item, index) => {
       const rowType: QuoteItemRowType =
@@ -96,9 +99,9 @@ function cleanQuotePayload(payload: QuotePayload, prefix: string) {
     taxMode: payload.taxMode,
     quoteDate: parseQuoteDate(payload.quoteDate),
     projectCode: nullable(payload.projectCode),
-    clientName: payload.clientName.trim() || "Cliente sin nombre",
+    clientName,
     clientRut: nullable(payload.clientRut),
-    branch: nullable(payload.branch),
+    branch: nullable(branch),
     commune: nullable(payload.commune),
     attention: nullable(payload.attention),
     city: nullable(payload.city),
@@ -408,9 +411,9 @@ export async function permanentlyDeleteSelectedQuotes(formData: FormData) {
 export async function createClient(formData: FormData) {
   const prisma = getPrisma();
   const clientData = {
-    name: text(formData.get("name")) || "Cliente sin nombre",
+    name: uppercaseBusinessText(text(formData.get("name"))) || "CLIENTE SIN NOMBRE",
     rut: nullable(text(formData.get("rut"))),
-    branch: nullable(text(formData.get("branch"))),
+    branch: nullable(uppercaseBusinessText(text(formData.get("branch")))),
     commune: nullable(text(formData.get("commune"))),
     attention: nullable(text(formData.get("attention"))),
     city: nullable(text(formData.get("city"))),

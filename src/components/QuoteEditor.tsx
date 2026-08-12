@@ -22,6 +22,7 @@ import {
   Revision,
   TaxMode,
   TAX_MODE_OPTIONS,
+  uppercaseBusinessText,
 } from "@/lib/quote-format";
 import type { QuoteTableRow } from "@/lib/quote-format";
 import { freelanceSettings } from "@/lib/freelance";
@@ -160,7 +161,13 @@ export function QuoteEditor({
       };
 
   const [form, setForm] = useState<QuotePayload>(
-    initialQuote ?? {
+    initialQuote
+      ? {
+          ...initialQuote,
+          clientName: uppercaseBusinessText(initialQuote.clientName),
+          branch: isFreelance ? initialQuote.branch : uppercaseBusinessText(initialQuote.branch),
+        }
+      : {
       quoteMode,
       code: buildQuoteCode(prefix, defaultProjectCode, today),
       revision: "",
@@ -210,7 +217,8 @@ export function QuoteEditor({
 
   function update<K extends keyof QuotePayload>(key: K, value: QuotePayload[K]) {
     markChanged();
-    setForm((current) => ({ ...current, [key]: value }));
+    const nextValue = key === "clientName" ? uppercaseBusinessText(String(value)) : value;
+    setForm((current) => ({ ...current, [key]: nextValue as QuotePayload[K] }));
   }
 
   function updateBranchValue<K extends "branch" | "commune" | "attention" | "city" | "payment" | "projectCode">(
@@ -218,11 +226,12 @@ export function QuoteEditor({
     value: QuotePayload[K],
   ) {
     markChanged();
+    const nextValue = key === "branch" && !isFreelance ? uppercaseBusinessText(String(value)) : value;
     setForm((current) => ({
       ...current,
       clientBranchId: null,
       saveClient: current.clientId ? true : current.saveClient,
-      [key]: value,
+      [key]: nextValue,
     }));
   }
 
@@ -279,9 +288,9 @@ export function QuoteEditor({
       ...current,
       clientId,
       clientBranchId: firstBranch?.id ?? null,
-      clientName: client?.name ?? current.clientName,
+      clientName: uppercaseBusinessText(client?.name ?? current.clientName),
       clientRut: client?.rut ?? "",
-      branch: firstBranch?.branch ?? client?.branch ?? "",
+      branch: isFreelance ? firstBranch?.branch ?? client?.branch ?? "" : uppercaseBusinessText(firstBranch?.branch ?? client?.branch),
       commune: firstBranch?.commune ?? client?.commune ?? "",
       attention: firstBranch?.attention ?? client?.attention ?? "",
       city: firstBranch?.city ?? client?.city ?? "",
@@ -302,7 +311,7 @@ export function QuoteEditor({
     setForm((current) => ({
       ...current,
       clientBranchId,
-      branch: branch?.branch ?? "",
+      branch: isFreelance ? branch?.branch ?? "" : uppercaseBusinessText(branch?.branch),
       commune: branch?.commune ?? "",
       attention: branch?.attention ?? "",
       city: branch?.city ?? "",
@@ -636,7 +645,7 @@ export function QuoteEditor({
               <select className={fieldClass} value={form.clientId ?? ""} onChange={(event) => selectClient(event.target.value)}>
                 <option value="">Ingresar datos manualmente</option>
                 {clients.map((client) => (
-                  <option key={client.id} value={client.id}>{client.name}</option>
+                  <option key={client.id} value={client.id}>{uppercaseBusinessText(client.name)}</option>
                 ))}
               </select>
             </label>
@@ -651,7 +660,10 @@ export function QuoteEditor({
                 <option value="">{form.clientId ? "Nueva sucursal / manual" : "Selecciona un cliente"}</option>
                 {branchOptions.map((branch) => (
                   <option key={branch.id} value={branch.id}>
-                    {[branch.branch, branch.commune].filter(Boolean).join(" - ") || "Sucursal sin nombre"}
+                    {[
+                      isFreelance ? branch.branch : uppercaseBusinessText(branch.branch),
+                      branch.commune,
+                    ].filter(Boolean).join(" - ") || "Sucursal sin nombre"}
                   </option>
                 ))}
               </select>

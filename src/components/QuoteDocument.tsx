@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { displayCode, formatMoney, quoteTableRows, quoteTotals, toDisplayDate } from "@/lib/quote-format";
+import { displayCode, formatMoney, quoteTableRows, quoteTotals, toDisplayDate, uppercaseBusinessText } from "@/lib/quote-format";
 
 type QuoteDocumentProps = {
   settings: {
@@ -92,11 +92,11 @@ export function QuoteDocument({ settings, quote }: QuoteDocumentProps) {
           <div className="service-left">
             <div>
               <strong className="service-label">Señores</strong>
-              <span className="service-value">{quote.clientName}</span>
+              <span className="service-value">{uppercaseBusinessText(quote.clientName)}</span>
             </div>
             <div>
               <strong className="service-label">Sucursal</strong>
-              <span className="service-value">{quote.branch}</span>
+              <span className="service-value">{uppercaseBusinessText(quote.branch)}</span>
             </div>
             <div>
               <strong className="service-label">Atención</strong>

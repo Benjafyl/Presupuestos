@@ -3,6 +3,7 @@ import { createClient, deleteSelectedClients } from "@/app/actions";
 import { AppShell } from "@/components/AppShell";
 import { ConfirmSubmitButton } from "@/components/ConfirmSubmitButton";
 import { getPrisma } from "@/lib/prisma";
+import { uppercaseBusinessText } from "@/lib/quote-format";
 
 const inputClass = "h-9 w-full border border-neutral-300 bg-white px-2 text-sm outline-none focus:border-neutral-900";
 const labelClass = "text-xs font-bold uppercase text-neutral-700";
@@ -102,7 +103,7 @@ export default async function ClientsPage({ searchParams }: ClientsPageProps) {
       groupsByName.get(key) ??
       ({
         key,
-        name: client.name,
+        name: uppercaseBusinessText(client.name),
         ruts: [],
         clientIds: [],
         branches: [],
@@ -117,7 +118,7 @@ export default async function ClientsPage({ searchParams }: ClientsPageProps) {
       client.branches.length > 0
         ? client.branches.map((branch) => ({
             key: `${client.id}-${branch.id}`,
-            branch: branch.branch,
+            branch: uppercaseBusinessText(branch.branch),
             commune: branch.commune,
             attention: branch.attention,
             city: branch.city,
@@ -127,7 +128,7 @@ export default async function ClientsPage({ searchParams }: ClientsPageProps) {
         : [
             {
               key: `${client.id}-legacy`,
-              branch: client.branch,
+              branch: uppercaseBusinessText(client.branch),
               commune: client.commune,
               attention: client.attention,
               city: client.city,

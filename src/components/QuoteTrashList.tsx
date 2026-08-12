@@ -8,7 +8,7 @@ import {
 } from "@/app/actions";
 import { ConfirmSubmitButton } from "@/components/ConfirmSubmitButton";
 import { getPrisma } from "@/lib/prisma";
-import { displayCode, formatMoney, quoteTotals, QuoteMode, toDisplayDate } from "@/lib/quote-format";
+import { displayCode, formatMoney, quoteTotals, QuoteMode, toDisplayDate, uppercaseBusinessText } from "@/lib/quote-format";
 import { daysUntilDelete, purgeExpiredDeletedQuotes } from "@/lib/quote-trash";
 
 type QuoteTrashListProps = {
@@ -84,7 +84,7 @@ export async function QuoteTrashList({ mode, backHref, accentClass = "text-red-8
                         <input className="size-4" name="quoteIds" type="checkbox" value={quote.id} />
                       </td>
                       <td className="p-3 font-mono text-xs font-bold">{displayCode(quote.code, quote.revision)}</td>
-                      <td className="p-3 font-semibold">{quote.clientName}</td>
+                      <td className="p-3 font-semibold">{uppercaseBusinessText(quote.clientName)}</td>
                       <td className="p-3">{toDisplayDate(quote.quoteDate)}</td>
                       <td className="p-3 text-right font-bold">{formatMoney(total)}</td>
                       <td className="p-3">{quote.deletedAt ? toDisplayDate(quote.deletedAt) : "-"}</td>

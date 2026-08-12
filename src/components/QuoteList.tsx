@@ -4,7 +4,7 @@ import type { Prisma } from "@prisma/client";
 import { deleteQuote, deleteSelectedQuotes, duplicateQuote } from "@/app/actions";
 import { ConfirmSubmitButton } from "@/components/ConfirmSubmitButton";
 import { getPrisma } from "@/lib/prisma";
-import { displayCode, formatMoney, quoteTotals, QuoteMode, toDisplayDate } from "@/lib/quote-format";
+import { displayCode, formatMoney, quoteTotals, QuoteMode, toDisplayDate, uppercaseBusinessText } from "@/lib/quote-format";
 import { purgeExpiredDeletedQuotes } from "@/lib/quote-trash";
 
 const PAGE_SIZE = 25;
@@ -133,11 +133,11 @@ export async function QuoteList({
     take: PAGE_SIZE,
   });
 
-  const clientOptions = uniqueOptions(filterRows.map((row) => row.clientName));
+  const clientOptions = uniqueOptions(filterRows.map((row) => uppercaseBusinessText(row.clientName)));
   const branchOptions = uniqueOptions(
     filterRows
       .filter((row) => !selectedClient || normalizeForKey(row.clientName) === normalizeForKey(selectedClient))
-      .map((row) => row.branch),
+      .map((row) => (mode === "interchile" ? uppercaseBusinessText(row.branch) : row.branch)),
   );
   const trashHref = mode === "freelance" ? "/freelance/trash" : "/interchile/trash";
   const hasFilters = Boolean(query || selectedClient || selectedBranch || selectedCurrency);
@@ -159,9 +159,10 @@ export async function QuoteList({
     quotes
       .reduce(
         (groups, quote) => {
-          const clientName = quote.clientName.trim() || "Cliente sin nombre";
+          const clientName = uppercaseBusinessText(quote.clientName) || "CLIENTE SIN NOMBRE";
           const clientKey = normalizeForKey(clientName) || `CLIENT-${quote.id}`;
-          const branchName = quote.branch?.trim() || "Sin sucursal";
+          const branchName =
+            mode === "interchile" ? uppercaseBusinessText(quote.branch) || "SIN SUCURSAL" : quote.branch?.trim() || "Sin sucursal";
           const branchKey = normalizeForKey(branchName) || `BRANCH-${quote.id}`;
           const group =
             groups.get(clientKey) ??

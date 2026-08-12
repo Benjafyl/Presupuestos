@@ -1,6 +1,6 @@
 import Image from "next/image";
 import { freelanceSettings } from "@/lib/freelance";
-import { displayCode, formatMoney, quoteTableRows, quoteTotals, toDisplayDate } from "@/lib/quote-format";
+import { displayCode, formatMoney, quoteTableRows, quoteTotals, toDisplayDate, uppercaseBusinessText } from "@/lib/quote-format";
 
 type FreelanceQuoteDocumentProps = {
   quote: {
@@ -82,7 +82,7 @@ export function FreelanceQuoteDocument({ quote }: FreelanceQuoteDocumentProps) {
       <section className="freelance-client">
         <div>
           <span>Cliente</span>
-          <strong>{quote.clientName}</strong>
+          <strong>{uppercaseBusinessText(quote.clientName)}</strong>
         </div>
         <div>
           <span>RUT</span>

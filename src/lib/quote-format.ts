@@ -45,6 +45,13 @@ export function normalizeProjectCode(projectCode: string) {
     .slice(0, 8);
 }
 
+export function uppercaseBusinessText(value: string | null | undefined) {
+  return String(value ?? "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toLocaleUpperCase("es-CL");
+}
+
 export function buildQuoteCode(prefix: string, projectCode: string, dateInput: string) {
   const cleanPrefix = normalizeProjectCode(prefix || "BYL");
   const cleanProject = normalizeProjectCode(projectCode || "XX");

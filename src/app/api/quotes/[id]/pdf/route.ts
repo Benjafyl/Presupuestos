@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { chromium } from "playwright";
 import { ensureCompanySettings } from "@/lib/defaults";
 import { getPrisma } from "@/lib/prisma";
-import { displayCode, safeFilePart } from "@/lib/quote-format";
+import { displayCode, safeFilePart, uppercaseBusinessText } from "@/lib/quote-format";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -39,7 +39,7 @@ export async function GET(request: NextRequest, context: PdfRouteContext) {
     });
 
     const code = safeFilePart(displayCode(quote.code, quote.revision));
-    const client = safeFilePart(quote.clientName || "Cliente");
+    const client = safeFilePart(uppercaseBusinessText(quote.clientName) || "CLIENTE");
     const filename = `Presupuesto_${code}_${client}.pdf`;
 
     return new Response(new Uint8Array(pdf), {
