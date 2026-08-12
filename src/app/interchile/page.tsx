@@ -4,8 +4,13 @@ import { ensureCompanySettings, ensureTemplateText } from "@/lib/defaults";
 
 export const dynamic = "force-dynamic";
 
-export default async function InterchileQuotesPage() {
+type InterchileQuotesPageProps = {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+};
+
+export default async function InterchileQuotesPage({ searchParams }: InterchileQuotesPageProps) {
   await Promise.all([ensureCompanySettings(), ensureTemplateText()]);
+  const params = await searchParams;
 
   return (
     <AppShell mode="interchile">
@@ -14,6 +19,7 @@ export default async function InterchileQuotesPage() {
         eyebrow="Listado de cotizaciones"
         mode="interchile"
         newHref="/quotes/new"
+        searchParams={params}
         title="Generador de Presupuestos InterchileClima"
       />
     </AppShell>

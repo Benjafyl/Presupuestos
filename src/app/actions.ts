@@ -130,6 +130,13 @@ function quoteIdsFromFormData(formData: FormData) {
     .filter((value) => Number.isInteger(value) && value > 0);
 }
 
+function clientIdsFromFormData(formData: FormData) {
+  return formData
+    .getAll("clientIds")
+    .map((value) => Number(value))
+    .filter((value) => Number.isInteger(value) && value > 0);
+}
+
 function revalidateQuoteLists() {
   revalidatePath("/");
   revalidatePath("/interchile");
@@ -439,6 +446,18 @@ export async function createClient(formData: FormData) {
 export async function deleteClient(id: number) {
   const prisma = getPrisma();
   await prisma.client.delete({ where: { id } });
+
+  revalidatePath("/clients");
+  revalidatePath("/quotes/new");
+  revalidatePath("/freelance/quotes/new");
+}
+
+export async function deleteSelectedClients(formData: FormData) {
+  const ids = clientIdsFromFormData(formData);
+  if (ids.length === 0) return;
+
+  const prisma = getPrisma();
+  await prisma.client.deleteMany({ where: { id: { in: ids } } });
 
   revalidatePath("/clients");
   revalidatePath("/quotes/new");
