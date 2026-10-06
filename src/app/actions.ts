@@ -15,6 +15,7 @@ import {
   toDateInput,
   uppercaseBusinessText,
 } from "@/lib/quote-format";
+import { branchIdentity, canonicalBranchName } from "@/lib/client-branches";
 import { freelanceSettings } from "@/lib/freelance";
 import { purgeExpiredDeletedQuotes, quoteTrashExpiresAt } from "@/lib/quote-trash";
 
@@ -38,6 +39,7 @@ export type QuotePayload = {
   clientId?: number | null;
   clientBranchId?: number | null;
   saveClient: boolean;
+  saveBranch?: boolean;
   clientName: string;
   clientRut: string;
   branch: string;
@@ -115,17 +117,6 @@ function cleanQuotePayload(payload: QuotePayload, prefix: string) {
   };
 }
 
-function hasBranchData(data: {
-  branch: string | null;
-  commune: string | null;
-  attention: string | null;
-  city: string | null;
-  payment: string | null;
-  projectCode: string | null;
-}) {
-  return Boolean(data.branch || data.commune || data.attention || data.city || data.payment || data.projectCode);
-}
-
 function quoteIdsFromFormData(formData: FormData) {
   return formData
     .getAll("quoteIds")
@@ -154,119 +145,91 @@ export async function saveQuote(payload: QuotePayload) {
   const prefix = payload.quoteMode === "freelance" ? freelanceSettings.quotePrefix : settings.quotePrefix;
   const clean = cleanQuotePayload(payload, prefix);
 
-  let clientId = payload.clientId ?? null;
-  let clientBranchId = payload.clientBranchId ?? null;
-  if (payload.saveClient && payload.clientName.trim()) {
-    const clientData = {
-      name: clean.clientName,
-      rut: clean.clientRut,
-      // Keep legacy fields in sync for older quotes/screens while branches become the source of truth.
-      branch: clean.branch,
-      commune: clean.commune,
-      attention: clean.attention,
-      city: clean.city,
-      payment: clean.payment,
-      projectCode: clean.projectCode,
-    };
-    const branchData = {
-      branch: clean.branch,
-      commune: clean.commune,
-      attention: clean.attention,
-      city: clean.city,
-      payment: clean.payment,
-      projectCode: clean.projectCode,
-    };
-
-    if (clientId) {
-      await prisma.client.update({ where: { id: clientId }, data: clientData });
-    } else {
-      const client = await prisma.client.create({ data: clientData });
-      clientId = client.id;
-    }
-
-    if (clientId && hasBranchData(branchData)) {
-      const selectedBranch = clientBranchId
-        ? await prisma.clientBranch.findFirst({ where: { id: clientBranchId, clientId } })
-        : null;
-
-      if (selectedBranch) {
-        await prisma.clientBranch.update({
-          where: { id: selectedBranch.id },
-          data: branchData,
-        });
+  const result = await prisma.$transaction(async (tx) => {
+    let clientId = payload.clientId ?? null;
+    let clientBranchId: number | null = null;
+    if (payload.saveClient && payload.clientName.trim()) {
+      const clientData = { name: clean.clientName, rut: clean.clientRut };
+      if (clientId) {
+        await tx.client.update({ where: { id: clientId }, data: clientData });
       } else {
-        const existingBranch = await prisma.clientBranch.findFirst({
-          where: {
-            clientId,
-            branch: branchData.branch,
-            commune: branchData.commune,
-            projectCode: branchData.projectCode,
-          },
-          orderBy: { updatedAt: "desc" },
-        });
-
-        if (existingBranch) {
-          await prisma.clientBranch.update({
-            where: { id: existingBranch.id },
-            data: branchData,
-          });
-          clientBranchId = existingBranch.id;
-        } else {
-          const branch = await prisma.clientBranch.create({
-            data: {
-              clientId,
-              ...branchData,
-            },
-          });
-          clientBranchId = branch.id;
-        }
+        const client = await tx.client.create({ data: clientData });
+        clientId = client.id;
       }
     }
-  }
 
-  const quoteData = {
-    quoteMode: clean.quoteMode,
-    code: clean.code,
-    revision: clean.revision,
-    currency: clean.currency,
-    taxMode: clean.taxMode,
-    quoteDate: clean.quoteDate,
-    projectCode: clean.projectCode,
-    clientId,
-    clientBranchId,
-    clientName: clean.clientName,
-    clientRut: clean.clientRut,
-    branch: clean.branch,
-    commune: clean.commune,
-    attention: clean.attention,
-    city: clean.city,
-    payment: clean.payment,
-    mainText: clean.mainText,
-    exclusions: clean.exclusions,
-    warranty: clean.warranty,
-    executionTime: clean.executionTime,
-    signature: clean.signature,
-  };
+    if (payload.saveBranch && (!clientId || !clean.branch)) {
+      throw new Error("Selecciona o guarda un cliente e ingresa el nombre de la sucursal.");
+    }
+    if (clientId) {
+      // Serialize catalogue writes for this client so simultaneous saves reuse a branch.
+      if (payload.saveBranch) {
+        await tx.$queryRaw`SELECT "id" FROM "Client" WHERE "id" = ${clientId} FOR UPDATE`;
+      }
+      const branches = await tx.clientBranch.findMany({ where: { clientId }, orderBy: { id: "asc" } });
+      const key = branchIdentity(clean);
+      const matchingBranch = key ? branches.find((branch) => branchIdentity(branch) === key) : undefined;
+      clientBranchId = matchingBranch?.id ?? null;
+      if (payload.saveBranch) {
+        const branchData = {
+          branch: canonicalBranchName(clean),
+          commune: clean.commune,
+          city: clean.city,
+        };
+        const savedBranch = matchingBranch
+          ? await tx.clientBranch.update({ where: { id: matchingBranch.id }, data: branchData })
+          : await tx.clientBranch.create({ data: { clientId, ...branchData } });
+        clientBranchId = savedBranch.id;
+      }
+    }
 
-  const quote = payload.id
-    ? await prisma.quote.update({
-        where: { id: payload.id },
-        data: {
-          ...quoteData,
-          items: {
-            deleteMany: {},
-            create: clean.items,
+    const quoteData = {
+      quoteMode: clean.quoteMode,
+      code: clean.code,
+      revision: clean.revision,
+      currency: clean.currency,
+      taxMode: clean.taxMode,
+      quoteDate: clean.quoteDate,
+      projectCode: clean.projectCode,
+      clientId,
+      clientBranchId,
+      clientName: clean.clientName,
+      clientRut: clean.clientRut,
+      branch: clean.branch,
+      commune: clean.commune,
+      attention: clean.attention,
+      city: clean.city,
+      payment: clean.payment,
+      mainText: clean.mainText,
+      exclusions: clean.exclusions,
+      warranty: clean.warranty,
+      executionTime: clean.executionTime,
+      signature: clean.signature,
+    };
+
+    const quote = payload.id
+      ? await tx.quote.update({
+          where: { id: payload.id },
+          data: {
+            ...quoteData,
+            items: {
+              deleteMany: {},
+              create: clean.items,
+            },
           },
-        },
-      })
-    : await prisma.quote.create({
-        data: {
-          ...quoteData,
-          items: {
-            create: clean.items,
+        })
+      : await tx.quote.create({
+          data: {
+            ...quoteData,
+            items: {
+              create: clean.items,
+            },
           },
-        },
-      });
+        });
+
+    return { id: quote.id, clientId, clientBranchId };
+  });
+  const quote = result;
 
   revalidatePath("/");
   revalidatePath("/interchile");
@@ -275,7 +238,7 @@ export async function saveQuote(payload: QuotePayload) {
   revalidatePath(`/quotes/${quote.id}/edit`);
   revalidatePath(`/quotes/${quote.id}/print`);
   revalidatePath(`/freelance/quotes/${quote.id}/edit`);
-  return { id: quote.id, clientId, clientBranchId };
+  return result;
 }
 
 export async function duplicateQuote(id: number) {
@@ -413,26 +376,18 @@ export async function createClient(formData: FormData) {
   const clientData = {
     name: uppercaseBusinessText(text(formData.get("name"))) || "CLIENTE SIN NOMBRE",
     rut: nullable(text(formData.get("rut"))),
+  };
+  const location = {
     branch: nullable(uppercaseBusinessText(text(formData.get("branch")))),
     commune: nullable(text(formData.get("commune"))),
-    attention: nullable(text(formData.get("attention"))),
     city: nullable(text(formData.get("city"))),
-    payment: nullable(text(formData.get("payment"))),
-    projectCode: nullable(text(formData.get("projectCode"))),
   };
-  const branchData = {
-    branch: clientData.branch,
-    commune: clientData.commune,
-    attention: clientData.attention,
-    city: clientData.city,
-    payment: clientData.payment,
-    projectCode: clientData.projectCode,
-  };
+  const branchData = { ...location, branch: canonicalBranchName(location) };
 
   await prisma.$transaction(async (tx) => {
     const client = await tx.client.create({ data: clientData });
 
-    if (hasBranchData(branchData)) {
+    if (branchData.branch) {
       await tx.clientBranch.create({
         data: {
           clientId: client.id,

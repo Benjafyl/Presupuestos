@@ -5,6 +5,7 @@ import { deleteQuote, deleteSelectedQuotes, duplicateQuote } from "@/app/actions
 import { ConfirmSubmitButton } from "@/components/ConfirmSubmitButton";
 import { getPrisma } from "@/lib/prisma";
 import { displayCode, formatMoney, quoteTotals, QuoteMode, toDisplayDate, uppercaseBusinessText } from "@/lib/quote-format";
+import { branchIdentity, canonicalBranchName } from "@/lib/client-branches";
 import { purgeExpiredDeletedQuotes } from "@/lib/quote-trash";
 
 const PAGE_SIZE = 25;
@@ -104,24 +105,25 @@ export async function QuoteList({
     andFilters.push({ clientName: equalsInsensitive(selectedClient) });
   }
 
-  if (selectedBranch) {
-    andFilters.push({ branch: equalsInsensitive(selectedBranch) });
-  }
-
   if (selectedCurrency === "CLP" || selectedCurrency === "UF") {
     andFilters.push({ currency: selectedCurrency });
   }
 
+  const filterRows = await prisma.quote.findMany({
+    where: { quoteMode: mode, deletedAt: null },
+    select: { id: true, clientName: true, branch: true, commune: true, city: true },
+    orderBy: [{ clientName: "asc" }, { branch: "asc" }],
+  });
+  if (selectedBranch) {
+    // Include the original documents under their canonical location without rewriting them.
+    const matchingIds = filterRows.filter((row) =>
+      normalizeForKey(mode === "interchile" ? canonicalBranchName(row) : row.branch) === normalizeForKey(selectedBranch)
+      || normalizeForKey(row.branch) === normalizeForKey(selectedBranch),
+    ).map((row) => row.id);
+    andFilters.push({ id: { in: matchingIds } });
+  }
   if (andFilters.length > 0) where.AND = andFilters;
-
-  const [filterRows, totalCount] = await Promise.all([
-    prisma.quote.findMany({
-      where: { quoteMode: mode, deletedAt: null },
-      select: { clientName: true, branch: true },
-      orderBy: [{ clientName: "asc" }, { branch: "asc" }],
-    }),
-    prisma.quote.count({ where }),
-  ]);
+  const totalCount = await prisma.quote.count({ where });
 
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
   const currentPage = Math.min(requestedPage, totalPages);
@@ -137,7 +139,7 @@ export async function QuoteList({
   const branchOptions = uniqueOptions(
     filterRows
       .filter((row) => !selectedClient || normalizeForKey(row.clientName) === normalizeForKey(selectedClient))
-      .map((row) => (mode === "interchile" ? uppercaseBusinessText(row.branch) : row.branch)),
+      .map((row) => (mode === "interchile" ? uppercaseBusinessText(canonicalBranchName(row)) : row.branch)),
   );
   const trashHref = mode === "freelance" ? "/freelance/trash" : "/interchile/trash";
   const hasFilters = Boolean(query || selectedClient || selectedBranch || selectedCurrency);
@@ -162,8 +164,8 @@ export async function QuoteList({
           const clientName = uppercaseBusinessText(quote.clientName) || "CLIENTE SIN NOMBRE";
           const clientKey = normalizeForKey(clientName) || `CLIENT-${quote.id}`;
           const branchName =
-            mode === "interchile" ? uppercaseBusinessText(quote.branch) || "SIN SUCURSAL" : quote.branch?.trim() || "Sin sucursal";
-          const branchKey = normalizeForKey(branchName) || `BRANCH-${quote.id}`;
+            mode === "interchile" ? uppercaseBusinessText(canonicalBranchName(quote)) || "SIN SUCURSAL" : quote.branch?.trim() || "Sin sucursal";
+          const branchKey = (mode === "interchile" ? branchIdentity(quote) : normalizeForKey(branchName)) || "NO-BRANCH";
           const group =
             groups.get(clientKey) ??
             ({

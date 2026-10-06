@@ -3,6 +3,7 @@ import { createClient, deleteSelectedClients } from "@/app/actions";
 import { AppShell } from "@/components/AppShell";
 import { ConfirmSubmitButton } from "@/components/ConfirmSubmitButton";
 import { getPrisma } from "@/lib/prisma";
+import { branchIdentity, uniqueBranches } from "@/lib/client-branches";
 import { uppercaseBusinessText } from "@/lib/quote-format";
 
 const inputClass = "h-9 w-full border border-neutral-300 bg-white px-2 text-sm outline-none focus:border-neutral-900";
@@ -16,10 +17,7 @@ type ClientBranchRow = {
   key: string;
   branch: string | null;
   commune: string | null;
-  attention: string | null;
   city: string | null;
-  payment: string | null;
-  projectCodes: string[];
 };
 
 type ClientGroup = {
@@ -54,37 +52,13 @@ function textIncludes(value: string | null | undefined, query: string) {
   return normalizeForKey(value).includes(normalizeForKey(query));
 }
 
-function branchGroupKey(branch: {
-  branch: string | null;
-  commune: string | null;
-  attention: string | null;
-  city: string | null;
-  payment: string | null;
-}) {
-  return [branch.branch, branch.commune, branch.attention, branch.city, branch.payment].map(normalizeForKey).join("|");
-}
-
 function dedupeBranches(branches: ClientBranchRow[]) {
   const grouped = new Map<string, ClientBranchRow>();
-
   for (const branch of branches) {
-    const key = branchGroupKey(branch) || branch.key;
-    const existing = grouped.get(key);
-
-    if (!existing) {
-      grouped.set(key, { ...branch, key, projectCodes: [...branch.projectCodes] });
-      continue;
-    }
-
-    for (const projectCode of branch.projectCodes) {
-      if (projectCode && !existing.projectCodes.includes(projectCode)) existing.projectCodes.push(projectCode);
-    }
+    const key = branchIdentity(branch);
+    if (key && !grouped.has(key)) grouped.set(key, { ...branch, key });
   }
-
-  return Array.from(grouped.values()).map((branch) => ({
-    ...branch,
-    projectCodes: branch.projectCodes.sort((a, b) => a.localeCompare(b, "es", { sensitivity: "base" })),
-  }));
+  return [...grouped.values()];
 }
 
 export default async function ClientsPage({ searchParams }: ClientsPageProps) {
@@ -114,28 +88,12 @@ export default async function ClientsPage({ searchParams }: ClientsPageProps) {
     if (client.rut && !group.ruts.includes(client.rut)) group.ruts.push(client.rut);
     if (client.updatedAt > group.updatedAt) group.updatedAt = client.updatedAt;
 
-    const branchRows =
-      client.branches.length > 0
-        ? client.branches.map((branch) => ({
-            key: `${client.id}-${branch.id}`,
-            branch: uppercaseBusinessText(branch.branch),
-            commune: branch.commune,
-            attention: branch.attention,
-            city: branch.city,
-            payment: branch.payment,
-            projectCodes: branch.projectCode ? [branch.projectCode] : [],
-          }))
-        : [
-            {
-              key: `${client.id}-legacy`,
-              branch: uppercaseBusinessText(client.branch),
-              commune: client.commune,
-              attention: client.attention,
-              city: client.city,
-              payment: client.payment,
-              projectCodes: client.projectCode ? [client.projectCode] : [],
-            },
-          ];
+    const branchRows = uniqueBranches(client.branches).map((branch) => ({
+      key: `${client.id}-${branch.id}`,
+      branch: uppercaseBusinessText(branch.branch),
+      commune: branch.commune,
+      city: branch.city,
+    }));
 
     group.branches.push(...branchRows);
     groupsByName.set(key, group);
@@ -157,7 +115,7 @@ export default async function ClientsPage({ searchParams }: ClientsPageProps) {
   const filteredGroups = query
     ? groups.filter((group) => {
         const branchText = group.branches
-          .map((branch) => [branch.branch, branch.commune, branch.attention, branch.city, branch.payment, ...branch.projectCodes].join(" "))
+          .map((branch) => [branch.branch, branch.commune, branch.city].join(" "))
           .join(" ");
         return (
           textIncludes(group.name, query) ||
@@ -184,10 +142,6 @@ export default async function ClientsPage({ searchParams }: ClientsPageProps) {
           <input className={inputClass} name="rut" />
         </label>
         <label className="space-y-1">
-          <span className={labelClass}>Codigo proyecto</span>
-          <input className={inputClass} name="projectCode" placeholder="PT" />
-        </label>
-        <label className="space-y-1">
           <span className={labelClass}>Sucursal</span>
           <input className={inputClass} name="branch" />
         </label>
@@ -196,16 +150,8 @@ export default async function ClientsPage({ searchParams }: ClientsPageProps) {
           <input className={inputClass} name="commune" />
         </label>
         <label className="space-y-1">
-          <span className={labelClass}>Atencion</span>
-          <input className={inputClass} name="attention" />
-        </label>
-        <label className="space-y-1">
           <span className={labelClass}>Ciudad</span>
           <input className={inputClass} name="city" />
-        </label>
-        <label className="space-y-1">
-          <span className={labelClass}>Pago</span>
-          <input className={inputClass} defaultValue="A CONVENIR" name="payment" />
         </label>
         <div className="flex items-end">
           <button className="button-primary h-9" type="submit">
@@ -217,8 +163,8 @@ export default async function ClientsPage({ searchParams }: ClientsPageProps) {
       <div className="mb-4 border border-neutral-300 bg-white p-4">
         <form className="grid gap-3 md:grid-cols-[1fr_auto_auto]" method="get">
           <label className="space-y-1">
-            <span className={labelClass}>Buscar cliente, sucursal, comuna o codigo</span>
-            <input className={inputClass} defaultValue={query} name="q" placeholder="Ej: Falabella, Temuco, R00F1" />
+            <span className={labelClass}>Buscar cliente, sucursal o comuna</span>
+            <input className={inputClass} defaultValue={query} name="q" placeholder="Ej: Falabella, Temuco" />
           </label>
           <div className="flex items-end">
             <button className="button-primary h-9" type="submit">
@@ -280,15 +226,12 @@ export default async function ClientsPage({ searchParams }: ClientsPageProps) {
                     </form>
                   </div>
                   <div className="overflow-x-auto">
-                    <table className="w-full min-w-[900px] border-collapse text-sm">
+                    <table className="w-full min-w-[500px] border-collapse text-sm">
                       <thead className="bg-neutral-100 text-left text-xs uppercase text-neutral-700">
                         <tr>
                           <th className="border-b border-neutral-300 p-3">Sucursal</th>
                           <th className="border-b border-neutral-300 p-3">Comuna</th>
-                          <th className="border-b border-neutral-300 p-3">Atencion</th>
                           <th className="border-b border-neutral-300 p-3">Ciudad</th>
-                          <th className="border-b border-neutral-300 p-3">Pago</th>
-                          <th className="border-b border-neutral-300 p-3">Codigos proyecto</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -296,12 +239,7 @@ export default async function ClientsPage({ searchParams }: ClientsPageProps) {
                           <tr key={branch.key} className="border-b border-neutral-200 last:border-b-0">
                             <td className="p-3">{branch.branch || "-"}</td>
                             <td className="p-3">{branch.commune || "-"}</td>
-                            <td className="p-3">{branch.attention || "-"}</td>
                             <td className="p-3">{branch.city || "-"}</td>
-                            <td className="p-3">{branch.payment || "-"}</td>
-                            <td className="p-3 font-mono text-xs font-bold">
-                              {branch.projectCodes.length > 0 ? branch.projectCodes.join(", ") : "-"}
-                            </td>
                           </tr>
                         ))}
                       </tbody>

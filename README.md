@@ -13,6 +13,36 @@ npm run dev
 
 Abrir [http://localhost:3000](http://localhost:3000).
 
+## Clientes y sucursales
+
+Seleccionar una sucursal completa solo nombre, comuna y ciudad. La atención, el pago,
+el código del proyecto y el código del presupuesto se guardan en cada cotización.
+El autoguardado no modifica el catálogo: para registrar un cliente o una sucursal,
+marcar su opción y pulsar **Guardar ahora**. Una sucursal existente se reutiliza por
+nombre y comuna, independientemente del contacto o proyecto.
+
+Los nombres confirmados de Mall Portal Temuco (Cenco Temuco / Cenco Mall) se muestran
+juntos. El local S506 sigue separado del mall. Los documentos históricos conservan
+sus textos originales.
+
+Pruebas de regresión (Node 22.18 o superior):
+
+```bash
+node --experimental-strip-types --test scripts/client-branches.test.mjs
+```
+
+Para revisar duplicados en otra base configurada con `DATABASE_URL`, desde el
+checkout del repositorio:
+
+```bash
+node --experimental-strip-types --env-file=.env scripts/normalize-branches.mjs
+node --experimental-strip-types --env-file=.env scripts/normalize-branches.mjs --apply
+```
+
+El primer comando solo muestra el plan. `--apply` guarda un respaldo en
+`output/backups`, unifica las referencias y verifica dentro de una transacción que
+el contenido de los presupuestos no cambie. No incorpora sucursales desde cotizaciones.
+
 ## Scripts
 
 ```bash
