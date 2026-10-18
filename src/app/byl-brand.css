@@ -1,0 +1,124 @@
+/* Self-hosted brand fonts keep the PDF independent of Google Fonts requests. */
+@font-face {
+  font-family: "BYL DM Sans";
+  src: url("/fonts/byl/dm-sans.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "BYL Manrope";
+  src: url("/fonts/byl/manrope.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 200 800;
+  font-display: swap;
+}
+
+/* Keep brand tokens scoped to BYL surfaces; Interchile retains its own styles. */
+.freelance-mode,
+.byl-mode-card,
+.freelance-sheet,
+.quote-preview.freelance-preview {
+  --byl-paper: #f5f5ef;
+  --byl-ink: #20221f;
+  --byl-muted: #6a6d65;
+  --byl-line: #d9dbd1;
+  --byl-lime: #d2ef77;
+  --byl-olive: #86a936;
+  --byl-emphasis: #4c651d;
+  --byl-soft: #eceee5;
+  --byl-section: #e4e9da;
+  --byl-font: "BYL DM Sans", Arial, sans-serif;
+  --byl-display: "BYL Manrope", Arial, sans-serif;
+}
+
+.byl-wordmark {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  width: 19mm;
+  height: 9mm;
+  color: var(--byl-ink);
+  font-family: var(--byl-display);
+  font-size: 36px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -3.5px;
+}
+
+.byl-wordmark-dot {
+  color: var(--byl-olive);
+}
+
+.freelance-mode,
+.byl-mode-card {
+  background: var(--byl-paper);
+  color: var(--byl-ink);
+  font-family: var(--byl-font);
+}
+
+.freelance-mode > header {
+  border-color: var(--byl-line);
+  background: var(--byl-paper);
+}
+
+.freelance-mode :is(h1, h2, h3),
+.byl-mode-card h2 {
+  color: var(--byl-ink);
+  font-family: var(--byl-display);
+  letter-spacing: -0.5px;
+}
+
+.byl-nav-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 1rem;
+  color: var(--byl-ink);
+  font-family: var(--byl-display);
+  font-weight: 600;
+}
+
+.byl-accent {
+  color: var(--byl-emphasis);
+}
+
+.byl-surface-ink {
+  background: var(--byl-ink);
+}
+
+.byl-selected {
+  background: var(--byl-lime);
+  color: var(--byl-ink);
+}
+
+.freelance-mode :is(input, select, textarea) {
+  accent-color: var(--byl-emphasis);
+}
+
+.freelance-mode :is(a, button, input, select, textarea):focus-visible,
+.byl-mode-card:focus-visible {
+  outline: 2px solid var(--byl-emphasis);
+  outline-offset: 3px;
+}
+
+.byl-mode-card {
+  border-color: var(--byl-line);
+}
+
+.byl-mode-card:hover {
+  border-color: var(--byl-olive);
+}
+
+.byl-mode-card-action {
+  align-items: center;
+  gap: 1rem;
+  background: var(--byl-lime);
+  color: var(--byl-ink);
+  padding: 0.65rem 0.9rem;
+}
+
+.byl-mode-card:hover .byl-mode-card-action {
+  background: var(--byl-ink);
+  color: var(--byl-paper);
+}

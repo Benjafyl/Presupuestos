@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "./byl-brand.css";
 
 :root {
   --background: #ffffff;
@@ -68,24 +69,27 @@ textarea {
 }
 
 .freelance-mode .button-primary {
-  border-color: #1d4ed8;
-  background: #1d4ed8;
-  color: white;
+  border-color: var(--byl-ink);
+  background: var(--byl-ink);
+  color: var(--byl-paper);
 }
 
 .freelance-mode .button-primary:hover {
-  background: #1e40af;
+  border-color: var(--byl-lime);
+  background: var(--byl-lime);
+  color: var(--byl-ink);
 }
 
 .freelance-mode .button-secondary {
-  border-color: #1d4ed8;
-  background: white;
-  color: #0f172a;
+  border-color: var(--byl-line);
+  background: transparent;
+  color: var(--byl-ink);
 }
 
 .freelance-mode .button-secondary:hover {
-  background: #eff6ff;
-  color: #1d4ed8;
+  border-color: var(--byl-olive);
+  background: var(--byl-soft);
+  color: var(--byl-ink);
 }
 
 @media print {
@@ -108,17 +112,20 @@ textarea {
 }
 
 .quote-preview.freelance-preview table thead {
-  background: #1d4ed8;
+  background: var(--byl-ink);
+  color: var(--byl-paper);
 }
 
 .quote-preview.freelance-preview {
-  font-family: Arial, "Liberation Sans", Helvetica, sans-serif;
+  background: var(--byl-paper);
+  color: var(--byl-ink);
+  font-family: var(--byl-font);
   letter-spacing: 0;
   text-rendering: geometricPrecision;
 }
 
 .quote-preview.freelance-preview table th {
-  border-bottom-color: #1e40af !important;
+  border-bottom-color: var(--byl-ink) !important;
 }
 
 .quote-preview table th {
@@ -154,4 +161,48 @@ textarea {
 .quote-preview > div:last-child {
   font-weight: 500;
   line-height: 1.32;
+}
+
+.freelance-preview .byl-wordmark {
+  width: 4rem;
+  height: 1.5rem;
+  margin-bottom: 0.5rem;
+  font-size: 28px;
+  letter-spacing: -2.7px;
+}
+
+.freelance-preview .freelance-preview-name,
+.freelance-preview > div:first-child > div:last-child > p:first-child {
+  color: var(--byl-ink);
+  font-family: var(--byl-display);
+  font-weight: 600;
+  letter-spacing: -0.3px;
+}
+
+.freelance-preview .freelance-preview-client {
+  border-color: var(--byl-line);
+}
+
+.freelance-preview .freelance-preview-description {
+  background: var(--byl-lime);
+  color: var(--byl-ink);
+}
+
+.quote-preview.freelance-preview table td {
+  border-color: var(--byl-line) !important;
+}
+
+.freelance-preview table td[colspan="5"] {
+  background: var(--byl-section);
+  color: var(--byl-ink);
+}
+
+.freelance-preview table td[colspan="4"],
+.freelance-preview table td[colspan="4"] + td {
+  background: var(--byl-soft);
+}
+
+.freelance-preview table tr:last-child td {
+  background: var(--byl-lime);
+  color: var(--byl-ink);
 }

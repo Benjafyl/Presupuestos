@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 export default function FreelanceTrashPage() {
   return (
     <AppShell mode="freelance">
-      <QuoteTrashList accentClass="text-blue-700" backHref="/freelance" mode="freelance" />
+      <QuoteTrashList accentClass="byl-accent" backHref="/freelance" mode="freelance" />
     </AppShell>
   );
 }

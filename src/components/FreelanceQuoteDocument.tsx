@@ -1,4 +1,4 @@
-import Image from "next/image";
+import { BylWordmark } from "@/components/BylWordmark";
 import { freelanceSettings } from "@/lib/freelance";
 import { displayCode, formatMoney, quoteTableRows, quoteTotals, toDisplayDate, uppercaseBusinessText } from "@/lib/quote-format";
 
@@ -54,14 +54,7 @@ export function FreelanceQuoteDocument({ quote }: FreelanceQuoteDocumentProps) {
     <main className={`freelance-sheet ${densityClass} ${contentDensityClass}`}>
       <header className="freelance-header">
         <section className="freelance-brand">
-          <Image
-            alt="BYL"
-            className="freelance-logo"
-            height={90}
-            priority
-            src="/logo-byl.png"
-            width={220}
-          />
+          <BylWordmark />
           <div>
             <h1>{freelanceSettings.name}</h1>
             <p>{freelanceSettings.area}</p>

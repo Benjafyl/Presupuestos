@@ -13,7 +13,7 @@ export default async function FreelanceQuotesPage({ searchParams }: FreelanceQuo
   return (
     <AppShell mode="freelance">
       <QuoteList
-        accentClass="text-blue-700"
+        accentClass="byl-accent"
         editHref={(id) => `/freelance/quotes/${id}/edit`}
         eyebrow="Cotizaciones freelance"
         mode="freelance"
