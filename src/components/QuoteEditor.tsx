@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { BylWordmark } from "@/components/BylWordmark";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -806,8 +807,8 @@ export function QuoteEditor({
           <div className="flex items-start justify-between gap-4">
             {isFreelance ? (
               <div>
-                <Image alt="BYL" className="mb-2 h-6 w-16 object-cover object-center" height={90} src="/logo-byl.png" width={220} />
-                <p className="font-bold text-blue-900">{freelanceSettings.name}</p>
+                <BylWordmark />
+                <p className="freelance-preview-name font-bold">{freelanceSettings.name}</p>
                 <p className="text-neutral-600">{freelanceSettings.area}</p>
               </div>
             ) : (
@@ -822,7 +823,7 @@ export function QuoteEditor({
               <p className="mt-2 font-bold">{isFreelance ? freelanceSettings.email : "RUT: 76.093.202-7"}</p>
             </div>
           </div>
-          <div className={`border p-2 ${isFreelance ? "border-blue-700" : "border-red-800"}`}>
+          <div className={`border p-2 ${isFreelance ? "freelance-preview-client" : "border-red-800"}`}>
             <div className="grid grid-cols-2 gap-x-4 gap-y-1">
               <p><b>{labels.clientName}</b> {form.clientName}</p>
               <p><b>Fecha:</b> {form.quoteDate}</p>
@@ -834,7 +835,7 @@ export function QuoteEditor({
               <p><b>Ciudad:</b> {form.city}</p>
             </div>
           </div>
-          <p className={`${previewRed} p-2 font-bold text-white`}>{form.mainText}</p>
+          <p className={`${previewRed} ${isFreelance ? "freelance-preview-description" : ""} p-2 font-bold text-white`}>{form.mainText}</p>
           <table className="w-full border-collapse">
             <thead className={`${previewRed} text-white`}>
               <tr>

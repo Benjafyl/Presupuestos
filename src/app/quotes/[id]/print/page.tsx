@@ -399,11 +399,11 @@ export default async function PrintQuotePage({ params }: PrintQuotePageProps) {
           width: 210mm;
           min-height: 297mm;
           margin: 0 auto;
-          background: #fff;
+          background: var(--byl-paper);
           box-sizing: border-box;
           padding: 20mm 14.5mm 16mm;
-          color: #0f172a;
-          font-family: Arial, "Liberation Sans", Helvetica, sans-serif;
+          color: var(--byl-ink);
+          font-family: var(--byl-font);
           font-size: 11px;
           font-weight: 400;
           font-synthesis: none;
@@ -419,7 +419,7 @@ export default async function PrintQuotePage({ params }: PrintQuotePageProps) {
           grid-template-columns: 1fr 55mm;
           gap: 14mm;
           align-items: start;
-          border-bottom: 1.6px solid #2563eb;
+          border-bottom: 1.6px solid var(--byl-line);
           padding-bottom: 8.5mm;
         }
 
@@ -429,25 +429,19 @@ export default async function PrintQuotePage({ params }: PrintQuotePageProps) {
           gap: 4.2mm;
         }
 
-        .freelance-logo {
-          display: block;
-          width: 19mm;
-          height: 9mm;
-          object-fit: cover;
-          object-position: center;
-        }
-
         .freelance-brand h1 {
+          font-family: var(--byl-display);
+          letter-spacing: -0.6px;
           margin: 0;
           font-size: 20px;
           font-weight: 700;
-          color: #0f172a;
+          color: var(--byl-ink);
           line-height: 1.08;
         }
 
         .freelance-brand p {
           margin: 1.1mm 0 0;
-          color: #475569;
+          color: var(--byl-muted);
           font-size: 10.5px;
           font-weight: 400;
           line-height: 1.25;
@@ -458,8 +452,10 @@ export default async function PrintQuotePage({ params }: PrintQuotePageProps) {
         }
 
         .freelance-meta h2 {
+          font-family: var(--byl-display);
+          letter-spacing: -0.6px;
           margin: 0 0 5.2mm;
-          color: #0f172a;
+          color: var(--byl-ink);
           font-size: 18.5px;
           font-weight: 700;
           line-height: 1.12;
@@ -467,7 +463,7 @@ export default async function PrintQuotePage({ params }: PrintQuotePageProps) {
 
         .freelance-meta p {
           margin: 0 0 2.1mm;
-          color: #0f172a;
+          color: var(--byl-ink);
           font-size: 10.5px;
           font-weight: 600;
           line-height: 1.2;
@@ -475,16 +471,16 @@ export default async function PrintQuotePage({ params }: PrintQuotePageProps) {
 
         .freelance-meta strong {
           margin-right: 3.5mm;
-          color: #0f172a;
+          color: var(--byl-ink);
           font-weight: 700;
         }
 
         .freelance-intro {
           margin: 6.8mm 0 6.2mm;
-          border-left: 2.2px solid #2563eb;
-          background: #eff6ff;
+          border-left: 2.2px solid var(--byl-olive);
+          background: var(--byl-lime);
           padding: 3.2mm 5mm;
-          color: #1e3a8a;
+          color: var(--byl-ink);
           font-size: 10.8px;
           font-weight: 700;
           line-height: 1.28;
@@ -498,21 +494,21 @@ export default async function PrintQuotePage({ params }: PrintQuotePageProps) {
         }
 
         .freelance-client div {
-          border-bottom: 1px solid #cbd5e1;
+          border-bottom: 1px solid var(--byl-line);
           padding-bottom: 1.7mm;
         }
 
         .freelance-client span {
           display: block;
           margin-bottom: 0.8mm;
-          color: #64748b;
+          color: var(--byl-muted);
           font-size: 8.2px;
           font-weight: 700;
           text-transform: uppercase;
         }
 
         .freelance-client strong {
-          color: #111827;
+          color: var(--byl-ink);
           font-size: 10.4px;
           font-weight: 700;
           line-height: 1.22;
@@ -527,8 +523,10 @@ export default async function PrintQuotePage({ params }: PrintQuotePageProps) {
 
         .freelance-description h3,
         .freelance-notes h3 {
+          font-family: var(--byl-display);
+          letter-spacing: -0.2px;
           margin: 0 0 2.1mm;
-          color: #0f172a;
+          color: var(--byl-ink);
           font-size: 11.2px;
           font-weight: 700;
           line-height: 1.2;
@@ -537,7 +535,7 @@ export default async function PrintQuotePage({ params }: PrintQuotePageProps) {
         .freelance-description p,
         .freelance-notes p {
           margin: 0;
-          color: #0f172a;
+          color: var(--byl-ink);
           font-size: 10px;
           line-height: 1.34;
         }
@@ -565,7 +563,7 @@ export default async function PrintQuotePage({ params }: PrintQuotePageProps) {
 
         .freelance-table th {
           border: 0;
-          background: #2563eb;
+          background: var(--byl-ink);
           color: #fff;
           padding: 6px 5px;
           font-size: 9.8px;
@@ -588,7 +586,7 @@ export default async function PrintQuotePage({ params }: PrintQuotePageProps) {
         }
 
         .freelance-table td {
-          border-bottom: 1px solid #cbd5e1;
+          border-bottom: 1px solid var(--byl-line);
           padding: 5px 5px;
           vertical-align: top;
           line-height: 1.2;
@@ -604,9 +602,9 @@ export default async function PrintQuotePage({ params }: PrintQuotePageProps) {
         }
 
         .freelance-table .section-row td {
-          background: #eff6ff;
-          border-bottom: 1px solid #93c5fd;
-          color: #1d4ed8;
+          background: var(--byl-section);
+          border-bottom: 1px solid var(--byl-line);
+          color: var(--byl-ink);
           font-size: 10px;
           font-weight: 700;
           text-transform: uppercase;
@@ -614,9 +612,9 @@ export default async function PrintQuotePage({ params }: PrintQuotePageProps) {
         }
 
         .freelance-table .section-subtotal-row td {
-          background: #f8fafc;
-          border-bottom: 1px solid #94a3b8;
-          color: #0f172a;
+          background: var(--byl-soft);
+          border-bottom: 1px solid var(--byl-line);
+          color: var(--byl-ink);
           font-weight: 700;
           text-align: right;
           padding-top: 5px;
@@ -624,17 +622,18 @@ export default async function PrintQuotePage({ params }: PrintQuotePageProps) {
         }
 
         .freelance-total-row td {
-          border-bottom: 1px solid #94a3b8;
-          color: #0f172a;
+          border-bottom: 1px solid var(--byl-line);
+          color: var(--byl-ink);
           font-weight: 700;
           text-align: right;
           padding-top: 5px;
           padding-bottom: 5px;
         }
 
+        .freelance-total-row:last-child td,
         .freelance-grand-total td {
-          background: #eff6ff;
-          color: #1d4ed8;
+          background: var(--byl-lime);
+          color: var(--byl-ink);
           font-size: 10.6px;
           font-weight: 700;
         }
@@ -652,7 +651,7 @@ export default async function PrintQuotePage({ params }: PrintQuotePageProps) {
         .freelance-signature {
           margin-top: 5.2mm;
           padding-top: 0;
-          color: #0f172a;
+          color: var(--byl-ink);
           font-size: 10.4px;
           font-weight: 700;
           line-height: 1.42;

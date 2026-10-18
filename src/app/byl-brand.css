@@ -1,0 +1,49 @@
+/* Self-hosted brand fonts keep the PDF independent of Google Fonts requests. */
+@font-face {
+  font-family: "BYL DM Sans";
+  src: url("/fonts/byl/dm-sans.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "BYL Manrope";
+  src: url("/fonts/byl/manrope.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 200 800;
+  font-display: swap;
+}
+
+/* Keep all brand tokens scoped to BYL documents and their editor preview. */
+.freelance-sheet,
+.quote-preview.freelance-preview {
+  --byl-paper: #f5f5ef;
+  --byl-ink: #20221f;
+  --byl-muted: #6a6d65;
+  --byl-line: #d9dbd1;
+  --byl-lime: #d2ef77;
+  --byl-olive: #86a936;
+  --byl-soft: #eceee5;
+  --byl-section: #e4e9da;
+  --byl-font: "BYL DM Sans", Arial, sans-serif;
+  --byl-display: "BYL Manrope", Arial, sans-serif;
+}
+
+.byl-wordmark {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  width: 19mm;
+  height: 9mm;
+  color: var(--byl-ink);
+  font-family: var(--byl-display);
+  font-size: 36px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -3.5px;
+}
+
+.byl-wordmark-dot {
+  color: var(--byl-olive);
+}
