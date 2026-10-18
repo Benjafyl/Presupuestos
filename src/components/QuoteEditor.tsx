@@ -134,9 +134,9 @@ export function QuoteEditor({
   const prefix = isFreelance ? freelanceSettings.quotePrefix : settings.quotePrefix;
   const signatureDefault = isFreelance ? freelanceSettings.signatureDefault : settings.signatureDefault;
   const defaultProjectCode = isFreelance ? "WEB" : "PT";
-  const previewRed = isFreelance ? "bg-blue-700" : "bg-red-800";
-  const accentText = isFreelance ? "text-blue-700" : "text-red-800";
-  const selectedButton = isFreelance ? "bg-blue-700 text-white" : "bg-red-800 text-white";
+  const previewRed = isFreelance ? "byl-surface-ink" : "bg-red-800";
+  const accentText = isFreelance ? "byl-accent" : "text-red-800";
+  const selectedButton = isFreelance ? "byl-selected" : "bg-red-800 text-white";
   const printHref = (id: number) => (isFreelance ? `/freelance/quotes/${id}/print` : `/quotes/${id}/print`);
   const labels = isFreelance
     ? {

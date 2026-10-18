@@ -15,7 +15,9 @@
   font-display: swap;
 }
 
-/* Keep all brand tokens scoped to BYL documents and their editor preview. */
+/* Keep brand tokens scoped to BYL surfaces; Interchile retains its own styles. */
+.freelance-mode,
+.byl-mode-card,
 .freelance-sheet,
 .quote-preview.freelance-preview {
   --byl-paper: #f5f5ef;
@@ -24,6 +26,7 @@
   --byl-line: #d9dbd1;
   --byl-lime: #d2ef77;
   --byl-olive: #86a936;
+  --byl-emphasis: #4c651d;
   --byl-soft: #eceee5;
   --byl-section: #e4e9da;
   --byl-font: "BYL DM Sans", Arial, sans-serif;
@@ -46,4 +49,76 @@
 
 .byl-wordmark-dot {
   color: var(--byl-olive);
+}
+
+.freelance-mode,
+.byl-mode-card {
+  background: var(--byl-paper);
+  color: var(--byl-ink);
+  font-family: var(--byl-font);
+}
+
+.freelance-mode > header {
+  border-color: var(--byl-line);
+  background: var(--byl-paper);
+}
+
+.freelance-mode :is(h1, h2, h3),
+.byl-mode-card h2 {
+  color: var(--byl-ink);
+  font-family: var(--byl-display);
+  letter-spacing: -0.5px;
+}
+
+.byl-nav-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 1rem;
+  color: var(--byl-ink);
+  font-family: var(--byl-display);
+  font-weight: 600;
+}
+
+.byl-accent {
+  color: var(--byl-emphasis);
+}
+
+.byl-surface-ink {
+  background: var(--byl-ink);
+}
+
+.byl-selected {
+  background: var(--byl-lime);
+  color: var(--byl-ink);
+}
+
+.freelance-mode :is(input, select, textarea) {
+  accent-color: var(--byl-emphasis);
+}
+
+.freelance-mode :is(a, button, input, select, textarea):focus-visible,
+.byl-mode-card:focus-visible {
+  outline: 2px solid var(--byl-emphasis);
+  outline-offset: 3px;
+}
+
+.byl-mode-card {
+  border-color: var(--byl-line);
+}
+
+.byl-mode-card:hover {
+  border-color: var(--byl-olive);
+}
+
+.byl-mode-card-action {
+  align-items: center;
+  gap: 1rem;
+  background: var(--byl-lime);
+  color: var(--byl-ink);
+  padding: 0.65rem 0.9rem;
+}
+
+.byl-mode-card:hover .byl-mode-card-action {
+  background: var(--byl-ink);
+  color: var(--byl-paper);
 }

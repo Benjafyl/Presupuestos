@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { Building2, Code2 } from "lucide-react";
+import { ArrowUpRight, Building2 } from "lucide-react";
+import { BylWordmark } from "@/components/BylWordmark";
 
 export default function ModeSelectionPage() {
   return (
@@ -29,17 +30,17 @@ export default function ModeSelectionPage() {
           </Link>
 
           <Link
-            className="group border border-neutral-300 bg-white p-6 transition hover:border-blue-700 hover:shadow-sm"
+            className="byl-mode-card group border p-6 transition hover:shadow-sm"
             href="/freelance"
           >
-            <div className="mb-5 inline-flex size-11 items-center justify-center border border-blue-700 text-blue-700">
-              <Code2 size={22} />
+            <div className="mb-5">
+              <BylWordmark />
             </div>
             <h2 className="text-xl font-bold">Cotizar como Benjamín Yáñez</h2>
             <p className="mt-2 text-sm leading-6 text-neutral-600">
               Presupuestos freelance para desarrollo web, e-commerce, software, automatizaciones, chatbots y soluciones digitales.
             </p>
-            <span className="mt-6 inline-flex text-sm font-bold text-blue-700">Entrar al generador</span>
+            <span className="byl-mode-card-action mt-6 inline-flex text-sm font-bold">Entrar al generador <ArrowUpRight aria-hidden="true" size={16} /></span>
           </Link>
         </div>
       </section>
