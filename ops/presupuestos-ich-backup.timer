@@ -1,0 +1,12 @@
+[Unit]
+Description=Ejecutar respaldo de Presupuestos ICH cada noche
+
+[Timer]
+OnCalendar=*-*-* 03:40:00 America/Santiago
+Persistent=true
+RandomizedDelaySec=10m
+AccuracySec=1m
+Unit=presupuestos-ich-backup.service
+
+[Install]
+WantedBy=timers.target

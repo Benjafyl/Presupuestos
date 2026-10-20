@@ -1,0 +1,13 @@
+[Unit]
+Description=Respaldo diario de Presupuestos ICH en el HDD
+Wants=docker.service
+After=docker.service
+RequiresMountsFor=/backups
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/presupuestos-ich-backup
+TimeoutStartSec=2h
+Nice=10
+IOSchedulingClass=best-effort
+IOSchedulingPriority=7

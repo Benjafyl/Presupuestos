@@ -66,6 +66,8 @@ La base de datos persistente vive en Supabase/PostgreSQL. No se necesita volumen
 
 ## Deploy en Dockploy
 
+La preparación de PostgreSQL dedicado en Servidor-BYL y el plan de migración desde Supabase están en [docs/base-servidor.md](docs/base-servidor.md). No cambies la conexión de producción a una base vacía.
+
 1. Crear una app desde el repositorio y rama `main`.
 2. Usar deploy por `Dockerfile`.
 3. Exponer el puerto `3000`.

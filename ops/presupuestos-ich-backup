@@ -1,0 +1,56 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+umask 077
+
+export RESTIC_REPOSITORY=/backups/presupuestos-ich-restic
+export RESTIC_PASSWORD_FILE=/etc/presupuestos-ich/restic-password
+STATUS_DIR=/var/lib/presupuestos-ich-backup
+DB_SERVICE=presupuestos-ich-postgres-xkt7sv
+STAGE=''
+
+install -d -m 700 -o root -g root "$STATUS_DIR"
+finish() {
+  local rc=$?
+  if (( rc != 0 )); then
+    date -Is > "$STATUS_DIR/last-failure" || true
+  fi
+  if [[ -n "$STAGE" && "$STAGE" == /var/tmp/presupuestos-ich-backup.* && -d "$STAGE" ]]; then
+    rm -rf -- "$STAGE"
+  fi
+}
+trap finish EXIT
+
+exec 9>/run/lock/presupuestos-ich-backup.lock
+flock -n 9 || { echo 'Ya hay un respaldo de Presupuestos ICH en curso' >&2; exit 1; }
+
+SOURCE=$(findmnt -rno SOURCE -T /backups)
+TARGET=$(findmnt -rno TARGET -T /backups)
+LABEL=$(blkid -s LABEL -o value "$SOURCE")
+[[ "$TARGET" == /backups && "$LABEL" == BACKUPS ]] || { echo 'El HDD BACKUPS no está montado en /backups' >&2; exit 1; }
+[[ -d "$RESTIC_REPOSITORY" && -r "$RESTIC_PASSWORD_FILE" ]] || { echo 'Falta el repositorio o su clave' >&2; exit 1; }
+
+USED=$(df -P /backups | awk 'NR==2 {gsub(/%/, "", $5); print $5}')
+if (( USED >= 85 )); then
+  echo "HDD de respaldos al ${USED}%; respaldo detenido para evitar llenarlo" >&2
+  exit 1
+elif (( USED >= 75 )); then
+  echo "Aviso: HDD de respaldos al ${USED}%" >&2
+fi
+
+mapfile -t CONTAINERS < <(docker ps -q --filter "label=com.docker.swarm.service.name=$DB_SERVICE")
+[[ "${#CONTAINERS[@]}" == 1 ]] || { echo 'PostgreSQL de Presupuestos no tiene exactamente un contenedor activo' >&2; exit 1; }
+DB_CONTAINER=${CONTAINERS[0]}
+docker exec "$DB_CONTAINER" pg_isready -U presupuestos_app -d presupuestos_ich > /dev/null
+
+STAGE=$(mktemp -d /var/tmp/presupuestos-ich-backup.XXXXXX)
+docker exec "$DB_CONTAINER" pg_dump -U presupuestos_app -d presupuestos_ich -Fc > "$STAGE/presupuestos-ich.dump"
+[[ -s "$STAGE/presupuestos-ich.dump" ]] || { echo 'El volcado de PostgreSQL está vacío' >&2; exit 1; }
+docker exec -i "$DB_CONTAINER" pg_restore --list < "$STAGE/presupuestos-ich.dump" > /dev/null
+printf 'fecha=%s\nservicio=%s\nbase=presupuestos_ich\n' "$(date -Is)" "$DB_SERVICE" > "$STAGE/manifiesto.txt"
+
+restic backup --tag presupuestos-ich "$STAGE"
+restic forget --group-by host,tags --keep-daily 7 --keep-weekly 4 --prune
+restic check
+date -Is > "$STATUS_DIR/last-success"
+rm -f -- "$STATUS_DIR/last-failure"
+echo 'Respaldo de Presupuestos ICH completo y verificado'
