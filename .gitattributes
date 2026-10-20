@@ -1,3 +1,4 @@
 ops/presupuestos-ich-backup text eol=lf
 ops/*.service text eol=lf
 ops/*.timer text eol=lf
+ops/*.sh text eol=lf

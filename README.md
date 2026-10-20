@@ -1,6 +1,6 @@
 # Generador de Presupuestos
 
-Aplicacion local en Next.js para generar cotizaciones en PDF para Interchile Clima y Benjamin Yanez. Usa Prisma con PostgreSQL/Supabase y Playwright para exportar el presupuesto en formato A4.
+Aplicacion en Next.js para generar cotizaciones en PDF para Interchile Clima y Benjamin Yanez. Usa Prisma con PostgreSQL y Playwright para exportar el presupuesto en formato A4. En produccion, PostgreSQL corre en Servidor-BYL como servicio dedicado de Dokploy.
 
 ## Desarrollo local
 
@@ -62,11 +62,11 @@ docker build -t presupuestos .
 docker run --rm -p 3000:3000 --env-file .env presupuestos
 ```
 
-La base de datos persistente vive en Supabase/PostgreSQL. No se necesita volumen para la base de datos; lo importante es configurar `DATABASE_URL` como variable de entorno.
+La base de datos de produccion vive en un volumen persistente del servicio PostgreSQL de Dokploy. Configurar `DATABASE_URL` como variable de entorno de la aplicacion; no subir la credencial a Git.
 
-## Deploy en Dockploy
+## Deploy en Dokploy
 
-La preparación de PostgreSQL dedicado en Servidor-BYL y el plan de migración desde Supabase están en [docs/base-servidor.md](docs/base-servidor.md). No cambies la conexión de producción a una base vacía.
+La base dedicada, la migracion desde Supabase y los respaldos estan documentados en [docs/base-servidor.md](docs/base-servidor.md).
 
 1. Crear una app desde el repositorio y rama `main`.
 2. Usar deploy por `Dockerfile`.
@@ -78,4 +78,4 @@ DATABASE_URL=postgresql://...
 PORT=3000
 ```
 
-El contenedor ejecuta automaticamente `prisma migrate deploy` y luego `node scripts/init-db.mjs` al iniciar. Eso crea/actualiza las tablas en Supabase y asegura los datos base sin borrar clientes ni cotizaciones.
+El contenedor ejecuta automaticamente `prisma migrate deploy` y luego `node scripts/init-db.mjs` al iniciar. Eso actualiza las tablas de PostgreSQL y asegura los datos base sin borrar clientes ni cotizaciones.
