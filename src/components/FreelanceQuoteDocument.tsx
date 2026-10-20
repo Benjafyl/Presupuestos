@@ -1,5 +1,6 @@
 import { BylWordmark } from "@/components/BylWordmark";
 import { freelanceSettings } from "@/lib/freelance";
+import { formatFreelanceSignature } from "@/lib/freelance-identity";
 import { displayCode, formatMoney, quoteTableRows, quoteTotals, toDisplayDate, uppercaseBusinessText } from "@/lib/quote-format";
 
 type FreelanceQuoteDocumentProps = {
@@ -41,13 +42,14 @@ function lines(value: string) {
 }
 
 export function FreelanceQuoteDocument({ quote }: FreelanceQuoteDocumentProps) {
+  const signature = formatFreelanceSignature(quote.signature);
   const totals = quoteTotals(quote.items);
   const tableRows = quoteTableRows(quote.items);
   const showsIva = quote.taxMode === "IVA_INCLUDED";
   const code = displayCode(quote.code, quote.revision);
   const densityClass =
     quote.items.length >= 14 ? "freelance-density-compact" : quote.items.length >= 8 ? "freelance-density-tight" : "";
-  const contentLength = [quote.mainText, quote.exclusions, quote.warranty, quote.executionTime, quote.signature].join("").length;
+  const contentLength = [quote.mainText, quote.exclusions, quote.warranty, quote.executionTime, signature].join("").length;
   const contentDensityClass = contentLength >= 900 ? "freelance-content-dense" : "";
 
   return (
@@ -177,7 +179,7 @@ export function FreelanceQuoteDocument({ quote }: FreelanceQuoteDocumentProps) {
         </div>
       </section>
 
-      <footer className="freelance-signature">{lines(quote.signature)}</footer>
+      <footer className="freelance-signature">{lines(signature)}</footer>
     </main>
   );
 }

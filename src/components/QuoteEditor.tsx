@@ -28,6 +28,7 @@ import {
 import type { QuoteTableRow } from "@/lib/quote-format";
 import { branchSelection, uniqueBranches } from "@/lib/client-branches";
 import { freelanceSettings } from "@/lib/freelance";
+import { formatFreelanceSignature } from "@/lib/freelance-identity";
 
 type ClientOption = {
   id: number;
@@ -166,6 +167,7 @@ export function QuoteEditor({
     initialQuote
       ? {
           ...initialQuote,
+          signature: isFreelance ? formatFreelanceSignature(initialQuote.signature) : initialQuote.signature,
           clientName: uppercaseBusinessText(initialQuote.clientName),
           branch: isFreelance ? initialQuote.branch : uppercaseBusinessText(initialQuote.branch),
         }
@@ -899,7 +901,7 @@ export function QuoteEditor({
             <p>{labels.exclusions.toUpperCase()}{"\n"}{form.exclusions}</p>
             <p>{labels.warranty.toUpperCase()}{"\n"}{form.warranty}</p>
             <p>{labels.executionTime.toUpperCase()}{"\n"}{form.executionTime}</p>
-            <p>{form.signature}</p>
+            <p>{isFreelance ? formatFreelanceSignature(form.signature) : form.signature}</p>
           </div>
         </div>
       </aside>

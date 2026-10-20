@@ -1,9 +1,10 @@
 import { buildQuoteCode } from "@/lib/quote-format";
+import { FREELANCE_FULL_NAME } from "@/lib/freelance-identity";
 
 export const freelanceSettings = {
   quotePrefix: "BY",
-  signatureDefault: "Atentamente,\n\nBenjamín Yáñez\nFreelance Developer / Soluciones Digitales",
-  name: "Benjamín Yáñez",
+  signatureDefault: `Atentamente,\n\n${FREELANCE_FULL_NAME}\nFreelance Developer / Soluciones Digitales`,
+  name: FREELANCE_FULL_NAME,
   brand: "BY",
   area: "Desarrollo Web y Soluciones Digitales",
   services: "Sitios web, e-commerce, software a medida, automatizaciones, chatbots y soluciones digitales",
