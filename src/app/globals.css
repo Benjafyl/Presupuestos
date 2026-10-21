@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "./byl-brand.css";
+@import "./development-credit.css";
 
 :root {
   --background: #ffffff;
