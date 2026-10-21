@@ -8,23 +8,25 @@
   --credit-font-size: 0.8125rem;
   --credit-line-height: 1.4;
   --credit-border-width: 1px;
-  --credit-gap: 0.625rem;
-  --credit-link-gap: 0.375rem;
+  --credit-link-gap: 0.625rem;
   --credit-padding: 1rem;
   --credit-link-padding: 0.25rem;
   --credit-link-height: 2.75rem;
-  --credit-icon-size: 1.5rem;
-  --credit-logo-width: 2.25rem;
+  --credit-icon-size: 1.875rem;
+  --credit-content-max: 80rem;
+  --credit-brand-weight: 600;
+  --credit-icon-tilt: -5deg;
+  --credit-pressed-scale: 0.96;
   --credit-outline: 2px;
   --credit-outline-offset: 3px;
-  --credit-transition: 180ms;
+  --credit-transition: 200ms;
   display: flex;
   flex-shrink: 0;
   align-items: center;
-  justify-content: center;
-  gap: var(--credit-gap);
+  justify-content: flex-end;
   border-top: var(--credit-border-width) solid var(--credit-line);
   padding: var(--credit-padding);
+  padding-inline: max(var(--credit-padding), calc((100% - var(--credit-content-max)) / 2));
   color: var(--credit-muted);
   font-family: var(--credit-font);
   font-size: var(--credit-font-size);
@@ -42,7 +44,8 @@
   transition: background-color var(--credit-transition) ease-out;
 }
 
-.development-credit-link:hover {
+.development-credit-link:hover,
+.development-credit-link:focus-visible {
   background-color: var(--credit-hover);
 }
 
@@ -54,16 +57,40 @@
 .development-credit-icon {
   width: var(--credit-icon-size);
   height: var(--credit-icon-size);
+  transition: transform var(--credit-transition) ease-out;
 }
 
-.development-credit-logo {
-  width: var(--credit-logo-width);
-  height: auto;
+.development-credit-link strong {
+  color: var(--credit-ink);
+  font-weight: var(--credit-brand-weight);
+}
+
+.development-credit-link span {
+  color: var(--credit-muted);
+}
+
+.development-credit-link:is(:hover, :focus-visible) .development-credit-icon {
+  transform: rotate(var(--credit-icon-tilt));
+}
+
+.development-credit-link:active .development-credit-icon {
+  transform: rotate(var(--credit-icon-tilt)) scale(var(--credit-pressed-scale));
+}
+
+@media (max-width: 40rem) {
+  .development-credit {
+    justify-content: center;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .development-credit-link {
+  .development-credit-link,
+  .development-credit-icon {
     transition: none;
+  }
+
+  .development-credit-link:is(:hover, :focus-visible, :active) .development-credit-icon {
+    transform: none;
   }
 }
 
