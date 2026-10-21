@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { FileText, Home, Settings, Users } from "lucide-react";
 import { BylWordmark } from "@/components/BylWordmark";
+import { DevelopmentCredit } from "@/components/DevelopmentCredit";
 
 type AppShellProps = {
   children: React.ReactNode;
@@ -14,7 +15,7 @@ export function AppShell({ children, mode = "interchile" }: AppShellProps) {
   const brandClass = isFreelance ? "byl-nav-brand" : "font-black uppercase text-red-800";
 
   return (
-    <div className={`min-h-screen bg-neutral-50 text-neutral-950 ${isFreelance ? "freelance-mode" : ""}`}>
+    <div className={`flex min-h-screen flex-col bg-neutral-50 text-neutral-950 ${isFreelance ? "freelance-mode" : ""}`}>
       <header className="border-b border-neutral-200 bg-white">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-3">
           <Link className={`text-sm tracking-normal ${brandClass}`} href={homeHref}>
@@ -41,7 +42,8 @@ export function AppShell({ children, mode = "interchile" }: AppShellProps) {
           </nav>
         </div>
       </header>
-      <main className="mx-auto w-full max-w-7xl px-4 py-6">{children}</main>
+      <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6">{children}</main>
+      <DevelopmentCredit />
     </div>
   );
 }

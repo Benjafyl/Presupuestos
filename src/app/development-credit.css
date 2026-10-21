@@ -1,0 +1,74 @@
+.development-credit {
+  --credit-ink: #20221f;
+  --credit-muted: #6a6d65;
+  --credit-line: #d9dbd1;
+  --credit-hover: #eceee5;
+  --credit-focus: #4c651d;
+  --credit-font: "BYL DM Sans", Arial, sans-serif;
+  --credit-font-size: 0.8125rem;
+  --credit-line-height: 1.4;
+  --credit-border-width: 1px;
+  --credit-gap: 0.625rem;
+  --credit-link-gap: 0.375rem;
+  --credit-padding: 1rem;
+  --credit-link-padding: 0.25rem;
+  --credit-link-height: 2.75rem;
+  --credit-icon-size: 1.5rem;
+  --credit-logo-width: 2.25rem;
+  --credit-outline: 2px;
+  --credit-outline-offset: 3px;
+  --credit-transition: 180ms;
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  gap: var(--credit-gap);
+  border-top: var(--credit-border-width) solid var(--credit-line);
+  padding: var(--credit-padding);
+  color: var(--credit-muted);
+  font-family: var(--credit-font);
+  font-size: var(--credit-font-size);
+  line-height: var(--credit-line-height);
+}
+
+.development-credit-link {
+  display: inline-flex;
+  min-height: var(--credit-link-height);
+  align-items: center;
+  justify-content: center;
+  gap: var(--credit-link-gap);
+  padding: var(--credit-link-padding);
+  color: var(--credit-ink);
+  transition: background-color var(--credit-transition) ease-out;
+}
+
+.development-credit-link:hover {
+  background-color: var(--credit-hover);
+}
+
+.development-credit-link:focus-visible {
+  outline: var(--credit-outline) solid var(--credit-focus);
+  outline-offset: var(--credit-outline-offset);
+}
+
+.development-credit-icon {
+  width: var(--credit-icon-size);
+  height: var(--credit-icon-size);
+}
+
+.development-credit-logo {
+  width: var(--credit-logo-width);
+  height: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .development-credit-link {
+    transition: none;
+  }
+}
+
+@media print {
+  .development-credit {
+    display: none;
+  }
+}
