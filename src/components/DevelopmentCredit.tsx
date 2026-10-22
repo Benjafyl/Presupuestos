@@ -6,7 +6,7 @@ export function DevelopmentCredit() {
       <a
         aria-label="Desarrollado por BYL: visitar sitio web (abre en una pestaña nueva)"
         className="development-credit-link"
-        href="https://byl-software.vercel.app/"
+        href="https://bylsoftware.cl/"
         rel="noopener noreferrer"
         target="_blank"
       >
